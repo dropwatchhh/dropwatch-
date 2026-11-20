@@ -2,3 +2,5 @@ trades.jsonl
 positions.json
 KILLED
 __pycache__/
+.venv/
+data/
