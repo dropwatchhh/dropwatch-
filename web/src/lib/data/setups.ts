@@ -39,7 +39,7 @@ export async function getSetups(): Promise<Setup[]> {
       if (gex.putWall && Math.abs(gex.putWall - chain.spot) / chain.spot < 0.02) reasons.push(`Put wall ${gex.putWall} is close below`);
       return {
         symbol, score: Math.round(Math.min(99, score)), regime: neg ? "Negative gamma" : "Positive gamma",
-        bias: neg ? "Trending" : "Mean-reverting", spot: chain.spot, flip: gex.flip, distToFlipPct: dist,
+        bias: neg ? "Trending" : "Mean-reverting", spot: quote.price, flip: gex.flip, distToFlipPct: dist,
         changePct: quote.changePct, netGex: gex.netGex, reasons, chainSource: chain.source, quoteSource: quote.source,
       } satisfies Setup;
     }),

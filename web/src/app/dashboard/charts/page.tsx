@@ -21,8 +21,12 @@ export default async function Page({ searchParams }: PageProps<"/dashboard/chart
   const y = (p: number) => PAD.t + (1 - (p - lo + span * 0.05) / (span * 1.1)) * (H - PAD.t - PAD.b);
   const step = (W - PAD.l - PAD.r) / cs.length;
   // Overlay levels only when they sit on the same price scale as the candles.
-  const levels = ([["Flip", gex.flip], ["Call wall", gex.callWall], ["Put wall", gex.putWall]] as const)
-    .filter(([, v]) => v !== null && v >= lo * 0.97 && v <= hi * 1.03) as [string, number][];
+  // Group levels that share a price so their labels don't overlap.
+  const grouped = new Map<number, string[]>();
+  for (const [name, v] of [["Flip", gex.flip], ["Call wall", gex.callWall], ["Put wall", gex.putWall]] as const) {
+    if (v !== null && v >= lo * 0.97 && v <= hi * 1.03) grouped.set(v, [...(grouped.get(v) ?? []), name]);
+  }
+  const levels = [...grouped.entries()].map(([v, names]) => [names.join(" / "), v] as [string, number]);
   const ticks = Array.from({ length: 5 }, (_, i) => lo + (span * i) / 4);
 
   return (
