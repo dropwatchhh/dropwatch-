@@ -1,12 +1,12 @@
 // One-off generator for the stored sample option chains. Output is static, made-up data.
 import { writeFileSync } from "node:fs";
-const specs = { SPY: [590, 1], QQQ: [510, 1], AAPL: [230, 2.5], NVDA: [140, 2.5], TSLA: [320, 5] };
+const specs = { SPY: [590], QQQ: [510], AAPL: [230], NVDA: [140], TSLA: [320] };
 let seed = 7;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const asOf = Date.parse("2026-11-20T20:00:00Z");
 const exps = [0, 1, 2, 4, 7, 14, 30].map((d) => new Date(asOf + d * 86400000).toISOString().slice(0, 10));
 const out = {};
-for (const [sym, [spot, step]] of Object.entries(specs)) {
+for (const [sym, [spot]] of Object.entries(specs)) {
   const rows = [];
   const stepEff = sym === "SPY" || sym === "QQQ" ? 5 : Math.max(1, Math.round(spot * 0.01));
   const base = Math.round(spot / stepEff) * stepEff;

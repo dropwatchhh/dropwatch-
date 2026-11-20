@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { cboeChain } from "./cboe";
 import { finnhubCandles, finnhubQuote, hasFinnhub } from "./finnhub";
 import * as sim from "./simulated";
@@ -10,6 +11,7 @@ import type { DataProvider } from "./types";
  */
 export const provider: DataProvider = {
   async getQuote(symbol) {
+    await connection();
     if (hasFinnhub()) { try { return await finnhubQuote(symbol); } catch {} }
     return sim.simQuote(symbol);
   },
@@ -21,9 +23,9 @@ export const provider: DataProvider = {
     if (process.env.OPTIONS_SOURCE === "cboe") { try { return await cboeChain(symbol); } catch {} }
     return sim.sampleChain(symbol);
   },
-  async getFlow() { return sim.simFlow(); },
+  async getFlow() { await connection(); return sim.simFlow(); },
   async getDarkPool() { return sim.simDarkPool(); },
-  async getSignals() { return sim.simSignals(); },
+  async getSignals() { await connection(); return sim.simSignals(); },
   async getAgents() { return sim.simAgents(); },
   async getTraders() { return sim.simTraders(); },
 };
