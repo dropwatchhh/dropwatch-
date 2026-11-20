@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0b;
+  --surface: #0e0e10;
+  --surface-2: #141418;
+  --line: rgba(255, 255, 255, 0.09);
+  --fg: #ededed;
+  --muted: #a8a8b0;
+  --accent: #2dd4bf;
+  --pos: #2dd4bf;
+  --neg: #fb7185;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html { scroll-behavior: smooth; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-sans); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.02em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
