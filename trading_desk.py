@@ -30,7 +30,10 @@ CFG = {
     "position_pct": 0.05,          # 5% of equity per trade
     "max_open": 3,
     "stop_loss": 0.15,             # exit at -15%
-    "take_profit": 0.40,           # exit at +40%
+    "partial_at": 0.25,            # sell half at +25%, then the rest runs with a break-even stop
+    "partial_frac": 0.5,
+    "take_profit": 0.60,           # exit the rest at +60%
+    "max_hold_steps": 90,          # ~30 min at 20s/step; sell stale positions
     "trail_pct": 0.12,             # trailing stop once in profit
     "daily_loss_limit": 0.05,      # pause for the day at -5% equity
     "max_drawdown": 0.20,          # KILL SWITCH: stop everything at -20% from peak
@@ -85,6 +88,7 @@ class Token:
 @dataclass
 class Position:
     token: Token; entry: float; size: float; peak: float; tokens_raw: int = 0
+    entry_step: int = 0; partial: bool = False
 
 
 # ---------- feeds ----------
@@ -137,6 +141,33 @@ class DexScreenerFeed:
 
 
 # ---------- safety agent (live only) ----------
+BAD_EXT = {"permanentDelegate", "transferHook", "nonTransferable", "defaultAccountState", "pausableConfig"}
+
+def token2022_trap(parsed):
+    """Token-2022 mints can carry extensions that let a creator seize, block or tax tokens."""
+    for e in parsed.get("extensions") or []:
+        name = e.get("extension", "")
+        if name in BAD_EXT: return f"token extension: {name}"
+        if name == "transferFeeConfig":
+            st = e.get("state") or {}
+            bps = max(int((st.get("newerTransferFee") or {}).get("transferFeeBasisPoints", 0)),
+                      int((st.get("olderTransferFee") or {}).get("transferFeeBasisPoints", 0)))
+            if bps > 300: return f"token transfer fee {bps / 100:.1f}%"
+    return None
+
+def rugcheck_reason(addr):
+    """Free RugCheck report as a second opinion. Fails closed: unreadable = no trade."""
+    try:
+        r = http_json("GET", f"https://api.rugcheck.xyz/v1/tokens/{addr}/report", timeout=15)
+    except Exception as e:
+        return f"rugcheck unavailable ({type(e).__name__})"
+    if r.get("rugged"): return "rugcheck: marked as rugged"
+    danger = [str(x.get("name", "?")) for x in (r.get("risks") or [])
+              if str(x.get("level", "")).lower() in ("danger", "critical", "high", "error")]
+    if danger: return "rugcheck danger: " + ", ".join(danger[:3])
+    return None
+
+
 class Safety:
     """Rejects tokens you probably can't sell or that the creator can still abuse."""
     def __init__(self, jup_key): self.jup_key = jup_key
@@ -149,6 +180,8 @@ class Safety:
             if not parsed: return "cannot read token mint"
             if parsed.get("mintAuthority"): return "creator can still mint more"
             if parsed.get("freezeAuthority"): return "creator can freeze wallets"
+            trap = token2022_trap(parsed)
+            if trap: return trap
             supply = int(parsed["supply"])
             if supply <= 0: return "zero supply"
             holders = [int(x["amount"]) for x in rpc("getTokenLargestAccounts", [t.addr])["value"]]
@@ -164,7 +197,7 @@ class Safety:
             out_usd = q.get("outUsdValue")
             if out_usd is not None and float(out_usd) < usd * 0.7:
                 return f"selling would lose >30% (quote ${float(out_usd):.2f} for ${usd:.2f})"
-            return None
+            return rugcheck_reason(t.addr)
         except Exception as e:
             return f"safety check failed ({type(e).__name__})"   # when unsure, don't trade
 
@@ -191,10 +224,10 @@ class LiveExecutor:
         sigs[signers.index(self.kp.pubkey())] = self.kp.sign_message(to_bytes_versioned(msg))
         return base64.b64encode(bytes(VersionedTransaction.populate(msg, sigs))).decode()
 
-    def _swap(self, inp, out, amount, check_value=False):
+    def _swap(self, inp, out, amount, check_value=False, slippage=150):
         try:
             q = urllib.parse.urlencode({"inputMint": inp, "outputMint": out, "amount": int(amount),
-                                        "taker": self.wallet, "slippageBps": 300})
+                                        "taker": self.wallet, "slippageBps": slippage})
             order = http_json("GET", f"{JUP}/order?{q}", headers={"x-api-key": self.api}, timeout=30)
             if not order.get("transaction"):
                 return None, order.get("errorMessage") or order.get("error") or "no transaction"
@@ -214,15 +247,16 @@ class LiveExecutor:
     def buy(self, tok, usd):
         if self.deployed + usd > HARD_CAP_USD:
             return 0, "hard cap reached"
-        res, err = self._swap(USDC, tok.addr, usd * 1e6, check_value=True)
+        res, err = self._swap(USDC, tok.addr, usd * 1e6, check_value=True, slippage=120)
         if err: return 0, err
         self.deployed += usd
         return int(res["outputAmountResult"]), None
 
-    def sell(self, pos):
-        res, err = self._swap(pos.token.addr, USDC, pos.tokens_raw)
+    def sell(self, pos, frac=1.0):
+        # exits get looser slippage than entries so a stop-loss still fills
+        res, err = self._swap(pos.token.addr, USDC, int(pos.tokens_raw * frac), slippage=200)
         if err: return 0.0, err
-        self.deployed = max(0.0, self.deployed - pos.size)
+        self.deployed = max(0.0, self.deployed - pos.size * frac)
         return int(res["outputAmountResult"]) / 1e6, None
 
     def usdc_balance(self):
@@ -284,7 +318,8 @@ class Desk:
         s = json.load(open(CFG["state_file"]))
         self.cash, self.peak, self.ex.deployed = s["cash"], s["peak"], s["deployed"]
         for d in s["pos"]:
-            p = Position(Token(**d["token"]), d["entry"], d["size"], d["peak"], d["tokens_raw"])
+            p = Position(Token(**d["token"]), d["entry"], d["size"], d["peak"], d["tokens_raw"],
+                         d.get("entry_step", 0), d.get("partial", False))
             self.pos[p.token.addr] = p; self.seen.add(p.token.addr)
         if self.pos: self.note(f"Restored {len(self.pos)} open position(s) from {CFG['state_file']}")
 
@@ -317,10 +352,28 @@ class Desk:
             p.token.price = self.feed.price(p.token)
             ret = p.token.price / p.entry - 1
             p.peak = max(p.peak, p.token.price)
-            if ret <= -CFG["stop_loss"]: self.close(addr, "stop loss")
+            if not p.partial and ret <= -CFG["stop_loss"]: self.close(addr, "stop loss")
+            elif p.partial and ret <= 0: self.close(addr, "break-even stop")
             elif ret >= CFG["take_profit"]: self.close(addr, "take profit")
+            elif not p.partial and ret >= CFG["partial_at"]: self.take_partial(addr)
             elif p.peak / p.entry > 1.1 and p.token.price <= p.peak * (1 - CFG["trail_pct"]):
                 self.close(addr, "trailing stop")
+            elif self.step - p.entry_step >= CFG["max_hold_steps"]: self.close(addr, "max hold time")
+
+    def take_partial(self, addr):             # lock in half the gain, let the rest run
+        p = self.pos[addr]; frac = CFG["partial_frac"]
+        if self.ex:
+            value, err = self.ex.sell(p, frac)
+            if err:
+                self.log("sell_failed", sym=p.token.symbol, why="partial: " + err); return
+        else:
+            value = p.size * frac * (p.token.price / p.entry) * (1 - CFG["fee_slippage"])
+        self.cash += value
+        pnl = value - p.size * frac
+        p.size *= (1 - frac); p.tokens_raw = int(p.tokens_raw * (1 - frac)); p.partial = True
+        self.log("partial_exit", sym=p.token.symbol, pnl=round(pnl, 2))
+        self.note(f"SOLD HALF of {p.token.symbol} pnl ${pnl:+.2f}; rest has a break-even stop")
+        self.save()
 
     def followups(self):                      # what did rejected tokens do afterwards?
         for w in list(self.watch):
@@ -378,7 +431,7 @@ class Desk:
                 raw, err = self.ex.buy(t, size)
                 if err: self.log("buy_failed", sym=t.symbol, why=err); continue
             self.cash -= size
-            self.pos[t.addr] = Position(t, t.price, size, t.price, raw)
+            self.pos[t.addr] = Position(t, t.price, size, t.price, raw, self.step)
             self.trades_today += 1
             self.log("buy", sym=t.symbol, score=score, size=size)
             self.note(f"BOUGHT {t.symbol} ${size:.2f} (score {score})")
