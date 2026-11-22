@@ -116,6 +116,7 @@ class Kalshi:
         self.s = session or requests.Session()
         self.sleep, self.max_retries = sleep, max_retries
         self.allow_orders = False  # bot.py sets this True ONLY for live mode (trading=live AND --live)
+        self.buy_limits = None     # (max_cost_usd, max_price): the client refuses buys without it, and above it
 
     @classmethod
     def from_env(cls):
@@ -230,6 +231,12 @@ class Kalshi:
     def place_order(self, ticker, outcome, action, count, price):
         if not self.allow_orders:
             raise KalshiError("order refused: client not enabled for live orders")
+        if action == "buy":
+            if not self.buy_limits:
+                raise KalshiError("order refused: buy limits not configured")
+            max_cost, max_price = self.buy_limits
+            if price > max_price + 1e-9 or price * count > max_cost + 1e-9:
+                raise KalshiError(f"order refused: {count} @ {price} exceeds client-level limits")
         return self.req("POST", "/portfolio/events/orders",
                         v2_order_body(ticker, outcome, action, count, price), auth=True)
 

@@ -79,3 +79,17 @@ def test_board_default_host_is_loopback(tmp_path, monkeypatch):
     monkeypatch.setattr(bot, "run_loop", lambda ctx, stop, deadline=None: stop.set())
     bot.main(["--config", str(cfg)])
     assert got["host"] == "127.0.0.1"
+
+
+def test_client_level_buy_limits_are_an_independent_second_cap():
+    c = Kalshi("k", KEY, session=Script(good_handler({})))
+    c.allow_orders = True
+    with pytest.raises(KalshiError, match="not configured"):
+        c.place_order(T, "yes", "buy", 1, 0.5)               # no limits => refuse (fail closed)
+    c.buy_limits = (5.0, 0.90)
+    with pytest.raises(KalshiError, match="exceeds"):
+        c.place_order(T, "yes", "buy", 100, 0.5)             # $50 > $5
+    with pytest.raises(KalshiError, match="exceeds"):
+        c.place_order(T, "yes", "buy", 1, 0.95)              # price above cap
+    c.place_order(T, "yes", "buy", 9, 0.5)                   # $4.50 ok
+    c.place_order(T, "yes", "sell", 500, 0.99)               # exits are never blocked by buy limits

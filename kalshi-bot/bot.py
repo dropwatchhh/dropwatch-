@@ -40,6 +40,7 @@ def main(argv=None):
 
     client = Kalshi.from_env()
     client.allow_orders = live  # the client itself refuses to place orders unless live
+    client.buy_limits = (cfg["size_per_trade_usd"], cfg["hard_max_price"])  # second, independent cap on every buy
     fee_mult = cfg["fee_multiplier"] or 1.0
     try:
         if not cfg["fee_multiplier"]:

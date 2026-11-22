@@ -34,6 +34,7 @@ def main():
     if not (c.key and c.key_id):
         sys.exit("Set the DEMO KALSHI_API_KEY_ID / KALSHI_PRIVATE_KEY_PATH.")
     c.allow_orders = True
+    c.buy_limits = (5.0, 0.99)  # tiny demo orders only
     bal0 = c.balance_usd()
     print(f"demo balance ${bal0:.2f}")
     m = c.open_market(SERIES["BTC"])

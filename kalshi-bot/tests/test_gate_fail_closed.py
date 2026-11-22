@@ -40,6 +40,7 @@ def run_once(tmp_path, handler, live, stale=False):
     sess = Script(handler)
     client = Kalshi("kid", KEY, session=sess, sleep=lambda s: None, max_retries=2)
     client.allow_orders = live
+    client.buy_limits = (5.0, 0.95)
     st = mkstate(tmp_path, armed=True)
     ctx = Ctx(client, st, {"BTC": TickFeed(stale)}, live=live)
     run_loop(ctx, OneShot())                      # must not raise
