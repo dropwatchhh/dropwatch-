@@ -94,10 +94,14 @@ is exactly no edge; the second week's profit is not statistically distinguishabl
 earlier 10-day, mid-fill result that looked positive (+$36.74) shrinks to +$26.96 with a one-tick penalty and a
 longer window. **The strategy has no demonstrated edge.**
 
-Live paper smoke run (current code, real data, started 14:23 UTC, still running when this was written at 14:44):
-0 errors/tracebacks/halts in the log, 1 round recorded, 0 trades. This is a stability sample only, not a
-statistical one. Earlier runs in this session were restarted deliberately by me after code fixes, not by crashes
-(0 crashes observed).
+Live paper smoke run (final code, real data, 14:23 to 15:25 UTC, one continuous process): **0 errors, tracebacks or
+halts**, 0 restarts, 1,446 snapshots recorded, secrets scan of its files clean. 4 rounds recorded, 2 traded, net
++$11.83 after fees: a stability sample only, statistically meaningless (the gate needs 300 trades over 14 days).
+A third position (19 NO at 0.25) was still open when the run stopped at 15:25 and sits unsettled in `state.json`.
+One observation: that trade entered with the model at 0.54 against a market ask of 0.25. The reasoning engine's
+veto threshold is a 0.30 gap and this was 0.29, so it passed by a hair. A trade like that is more likely a model
+error than an edge. I did not change the threshold (that would be tuning), but it is a reason to distrust the
+"edge" numbers above.
 
 ---
 
