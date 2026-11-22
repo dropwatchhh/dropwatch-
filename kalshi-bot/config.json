@@ -1,0 +1,16 @@
+{
+  "trading": "paper",
+  "mode": "balanced",
+  "assets": ["BTC"],
+  "size_per_trade_usd": 5,
+  "daily_loss_cap_usd": 15,
+  "max_losses_in_row": 3,
+  "poll_seconds": 2,
+  "hard_max_price": 0.95,
+  "stale_seconds": 5,
+  "basis_bps": 2.0,
+  "shrink": 0.9,
+  "momentum_weight": 0.0,
+  "max_disagreement": 0.30,
+  "record_snapshots": true
+}

@@ -1,0 +1,11 @@
+*.pem
+*.key
+.env
+state.json
+state.json.tmp
+trades.csv
+snapshots.csv
+__pycache__/
+.pytest_cache/
+*.log
+hist_*.csv
