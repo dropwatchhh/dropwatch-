@@ -132,6 +132,8 @@ def make_handler(client, st, live, fee_mult=1.0):
             path = urlparse(self.path).path
             if path == "/api/arm":
                 with st.lock:
+                    if data.get("armed") and os.path.exists(st.kill_path):
+                        return self._send(409, json.dumps(dict(error="kill switch engaged")))
                     if data.get("armed") and st.halted:
                         return self._send(409, json.dumps(dict(error=f"halted: {st.halted}")))
                     st.armed = bool(data.get("armed"))

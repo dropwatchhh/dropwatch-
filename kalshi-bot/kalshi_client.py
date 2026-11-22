@@ -115,6 +115,7 @@ class Kalshi:
         self.prefix = urlparse(self.base).path  # e.g. /trade-api/v2 (what gets signed)
         self.s = session or requests.Session()
         self.sleep, self.max_retries = sleep, max_retries
+        self.allow_orders = False  # bot.py sets this True ONLY for live mode (trading=live AND --live)
 
     @classmethod
     def from_env(cls):
@@ -175,7 +176,13 @@ class Kalshi:
                 except Exception:
                     pass
                 raise KalshiError(f"HTTP {r.status_code} {code or ''} {msg}".strip(), r.status_code, code)
-            return r.json()
+            if r.status_code == 204:
+                return {}
+            try:
+                return r.json()
+            except ValueError:
+                # a 2xx we cannot parse: for a write we cannot know what happened
+                raise KalshiError("unparseable response", r.status_code, ambiguous=not is_get)
         raise last or KalshiError("request failed")
 
     # ---- public market data
@@ -221,5 +228,23 @@ class Kalshi:
         return out
 
     def place_order(self, ticker, outcome, action, count, price):
+        if not self.allow_orders:
+            raise KalshiError("order refused: client not enabled for live orders")
         return self.req("POST", "/portfolio/events/orders",
                         v2_order_body(ticker, outcome, action, count, price), auth=True)
+
+    def cancel_all_orders(self):
+        """Cancel every resting event-market order (DELETE /portfolio/events/orders, 204)."""
+        return self.req("DELETE", "/portfolio/events/orders", auth=True)
+
+    def fills(self, order_id=None):
+        """Fills for an order (or recent fills). Used to verify logged prices/fees against Kalshi."""
+        out, cursor = [], ""
+        for _ in range(10):
+            q = "/portfolio/fills?limit=200" + (f"&order_id={order_id}" if order_id else "") + (f"&cursor={cursor}" if cursor else "")
+            d = self.req("GET", q, auth=True)
+            out += d.get("fills", [])
+            cursor = d.get("cursor") or ""
+            if not cursor:
+                break
+        return out

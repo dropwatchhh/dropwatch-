@@ -49,15 +49,23 @@ def test_disarmed_blocks(tmp_path):
 
 
 def test_size_cap_never_exceeded_even_for_expensive_contracts(tmp_path):
-    st = mkstate(tmp_path, size_per_trade_usd=5)
+    st = mkstate(tmp_path, size_per_trade_usd=5, mode="aggressive")
     mkround(st)
     assert buy(st, price=0.9)
     p = st.rounds[T]["pos"]
     assert p["price"] * p["count"] + p["fee"] <= 5.0
-    # a $5 budget can't buy even one contract at 0.95+fee? it can (0.95+0.003) -- but $0.50 cap can't
-    st2 = mkstate(tmp_path / "x" if (tmp_path / "x").mkdir() is None else tmp_path, size_per_trade_usd=0.5)
+    d2 = tmp_path / "x"
+    d2.mkdir()
+    st2 = mkstate(d2, size_per_trade_usd=0.5, mode="aggressive")
     mkround(st2)
-    assert buy(st2, price=0.9) is False and not st2.rounds[T]["pos"]
+    assert buy(st2, price=0.9) is False and not st2.rounds[T]["pos"]  # $0.50 cannot buy one at 0.90 + fee
+
+
+def test_mode_max_price_enforced_in_order_path_not_just_decide(tmp_path):
+    st = mkstate(tmp_path, mode="conservative")   # conservative max price is 0.75
+    mkround(st)
+    assert buy(st, price=0.80) is False and "above max" in st.rounds[T]["reason"]
+    assert buy(st, price=0.70) is True
 
 
 def test_max_affordable_count_includes_fees():

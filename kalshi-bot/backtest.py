@@ -137,7 +137,12 @@ def format_report(m):
 
 
 # ------------------------------------------------------------------ replay
-def replay(trades_rows, snap_rows, mode, size, fee_mult=1.0, min_edge=None, hard_max=0.95, max_disagreement=0.30):
+def tick_at(price):
+    """Kalshi price grid step at this price (0.001 in the tails, 0.01 in the middle)."""
+    return 0.001 if price < 0.10 or price > 0.90 else 0.01
+
+
+def replay(trades_rows, snap_rows, mode, size, fee_mult=1.0, min_edge=None, hard_max=0.95, max_disagreement=0.30, slip_ticks=0):
     """Re-run decide() over recorded snapshots; first qualifying snapshot per round is the entry.
     Applies the same reasoning-engine veto as live (model vs market-mid disagreement)."""
     modes_backup = dict(MODES)
@@ -167,13 +172,16 @@ def replay(trades_rows, snap_rows, mode, size, fee_mult=1.0, min_edge=None, hard
                 mid = (q["yes_bid"] + q["yes_ask"]) / 2
                 if sig["p_side"] - (mid if side == "yes" else 1 - mid) > max_disagreement:
                     continue  # reasoning-engine veto
-                n = max_affordable_count(size, d["price"], fee_mult)
+                px = round(d["price"] + slip_ticks * tick_at(d["price"]), 4)   # pessimistic fill: pay ask + k ticks
+                if px >= 1 or px > min(MODES[mode]["max_price"], hard_max):
+                    continue  # the order path would refuse this price
+                n = max_affordable_count(size, px, fee_mult)
                 if n < 1:
                     continue
-                fee = trade_fee(d["price"], n, fee_mult)
+                fee = trade_fee(px, n, fee_mult)
                 won = results[ticker] == side
-                pnl = (n if won else 0) - d["price"] * n - fee
-                row.update(action="ENTER", side=side, count=str(n), entry_price=str(d["price"]), entry_fee=str(fee),
+                pnl = (n if won else 0) - px * n - fee
+                row.update(action="ENTER", side=side, count=str(n), entry_price=str(px), entry_fee=str(fee),
                            edge=str(d["edge"]), pnl=str(pnl), fees=str(fee), cashed_out="0",
                            p_model=s["p_up"], p_market=str((_f(s["yes_bid"]) + _f(s["yes_ask"])) / 2))
                 break
@@ -193,6 +201,7 @@ def main(argv=None):
     ap.add_argument("--min-edge", type=float)
     ap.add_argument("--size", type=float, default=5.0)
     ap.add_argument("--fee-multiplier", type=float, default=1.0)
+    ap.add_argument("--slip-ticks", type=int, default=0, help="pessimistic fills: pay ask + N ticks")
     ap.add_argument("--halves", action="store_true", help="also report the first and second half (by time) separately")
     a = ap.parse_args(argv)
     try:
@@ -200,7 +209,7 @@ def main(argv=None):
     except FileNotFoundError:
         sys.exit(f"{a.trades} not found. Run the bot in paper mode first.")
     if a.replay:
-        rows = replay(rows, load_csv(a.snapshots), a.mode, a.size, a.fee_multiplier, a.min_edge)
+        rows = replay(rows, load_csv(a.snapshots), a.mode, a.size, a.fee_multiplier, a.min_edge, slip_ticks=a.slip_ticks)
         print(f"[replay: mode={a.mode} min_edge={a.min_edge}; ignores loss-streak/daily-cap limits]")
     print(format_report(analyse(rows)))
     if a.halves and len(rows) >= 2:

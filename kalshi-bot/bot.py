@@ -39,6 +39,7 @@ def main(argv=None):
         sys.exit("--arm is paper-only; arm a live bot from the board.")
 
     client = Kalshi.from_env()
+    client.allow_orders = live  # the client itself refuses to place orders unless live
     fee_mult = cfg["fee_multiplier"] or 1.0
     try:
         if not cfg["fee_multiplier"]:

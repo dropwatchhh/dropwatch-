@@ -32,6 +32,9 @@ SNAP_COLUMNS = ["time", "ticker", "asset", "secs_left", "price", "target", "vol_
                 "p_up", "yes_bid", "yes_ask", "no_bid", "no_ask", "yes_ask_size", "no_ask_size"]
 
 
+KILL_FILE = os.getenv("KALSHI_BOT_KILL_FILE", "KILL")
+
+
 def load_config(path):
     with open(path) as f:
         cfg = {**DEFAULTS, **json.load(f)}
@@ -83,8 +86,10 @@ def append_csv(path, columns, row, lock=None):
 
 # ------------------------------------------------------------------ state + risk
 class State:
-    def __init__(self, cfg, path="state.json", trades_path="trades.csv", snaps_path="snapshots.csv", today_fn=utc_today):
+    def __init__(self, cfg, path="state.json", trades_path="trades.csv", snaps_path="snapshots.csv", today_fn=utc_today,
+                 kill_path=None):
         self.cfg, self.path = cfg, path
+        self.kill_path = kill_path or KILL_FILE
         self.trades_path, self.snaps_path, self.today_fn = trades_path, snaps_path, today_fn
         self.lock = threading.RLock()
         self.armed = False
@@ -148,14 +153,17 @@ class State:
         """Fail-closed gate. Returns (ok, reason)."""
         self.roll_day()
         c = self.cfg
+        if os.path.exists(self.kill_path):
+            self.armed = False
+            return False, "kill switch engaged (KILL file present; run `python kill.py --clear`)"
         if self.halted:
             return False, f"halted: {self.halted}"
         if not self.armed:
             return False, "disarmed"
         if ticker in self.attempted or (self.rounds.get(ticker) or {}).get("pos"):
             return False, "already traded this round"
-        if not (0 < price <= c["hard_max_price"]):
-            return False, f"price {price} above hard max {c['hard_max_price']}"
+        if not (0 < price <= min(c["hard_max_price"], MODES[c["mode"]]["max_price"])):
+            return False, f"price {price} above max {min(c['hard_max_price'], MODES[c['mode']]['max_price'])}"
         if cost > c["size_per_trade_usd"] + 1e-9:
             return False, f"cost ${cost:.2f} exceeds size cap ${c['size_per_trade_usd']:.2f}"
         if self.pnl <= -c["daily_loss_cap_usd"]:
@@ -218,6 +226,8 @@ def enter(client, st, live, ticker, side, price, ask_size, fee_mult, reason, rea
             r["reason"] = f"blocked: {why}"
             return False
         st.attempted.add(ticker)  # one attempt per round, even if the order fails
+        if live:
+            st.save()  # write-ahead: a crash during/after the order can never lead to a second order
         fill_price = price
         if live:
             try:
@@ -455,6 +465,9 @@ def run_loop(ctx, stop, deadline=None):
             stop.set()
             break
         st.roll_day()
+        if os.path.exists(st.kill_path) and st.armed:
+            st.armed = False
+            st.note("KILL file present: disarmed")
         for asset in ctx.feeds:
             try:
                 process_asset(ctx, asset)
