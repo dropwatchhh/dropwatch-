@@ -111,7 +111,7 @@ def v2_order_body(ticker, outcome, action, count, price, client_order_id=None):
 class Kalshi:
     def __init__(self, key_id="", key=None, base=None, session=None, sleep=time.sleep, max_retries=4):
         self.key_id, self.key = key_id, key
-        self.base = (base or os.getenv("KALSHI_BASE_URL") or DEFAULT_BASE).rstrip("/")
+        self.base = (base or DEFAULT_BASE).rstrip("/")  # fixed per environment; no env-var override
         self.prefix = urlparse(self.base).path  # e.g. /trade-api/v2 (what gets signed)
         self.s = session or requests.Session()
         self.sleep, self.max_retries = sleep, max_retries
@@ -120,13 +120,9 @@ class Kalshi:
 
     @classmethod
     def from_env(cls):
-        key_id = os.getenv("KALSHI_API_KEY_ID", "")
-        path = os.getenv("KALSHI_PRIVATE_KEY_PATH", "")
-        key = None
-        if path and os.path.exists(path):
-            with open(path, "rb") as f:
-                key = serialization.load_pem_private_key(f.read(), password=None)
-        return cls(key_id, key)
+        """Deprecated: credentials are loaded ONLY via credentials.load('live'|'demo'). Returns a
+        public (unauthenticated) client so no legacy variable can ever authenticate anything."""
+        return cls()
 
     def _headers(self, method, path, auth):
         h = {"Content-Type": "application/json"}
@@ -218,6 +214,14 @@ class Kalshi:
         b = self.req("GET", "/portfolio/balance", auth=True)
         return float(b["balance_dollars"]) if b.get("balance_dollars") else b["balance"] / 100.0
 
+    def balance_detail(self):
+        """Full balance response incl. balance_breakdown per exchange shard."""
+        return self.req("GET", "/portfolio/balance", auth=True)
+
+    def settlements(self, ticker):
+        d = self.req("GET", f"/portfolio/settlements?ticker={ticker}&limit=50", auth=True)
+        return d.get("settlements", [])
+
     def positions(self):
         out, cursor = [], ""
         for _ in range(20):
@@ -234,7 +238,9 @@ class Kalshi:
         if action == "buy":
             if not self.buy_limits:
                 raise KalshiError("order refused: buy limits not configured")
-            max_cost, max_price = self.buy_limits
+            max_cost, max_price, *rest = self.buy_limits
+            if rest and count > rest[0]:
+                raise KalshiError(f"order refused: {count} contracts exceeds client-level max {rest[0]}")
             if price > max_price + 1e-9 or price * count > max_cost + 1e-9:
                 raise KalshiError(f"order refused: {count} @ {price} exceeds client-level limits")
         return self.req("POST", "/portfolio/events/orders",

@@ -2,7 +2,7 @@
 """Scan files (and optionally git history) for key material.  python audit_secrets.py [paths] [--git]
 
 Flags: PEM private-key blocks; the API key id and any line of the PEM file named by the
-environment (KALSHI_API_KEY_ID / KALSHI_PRIVATE_KEY_PATH); extra literals via --literal.
+environment (KALSHI_LIVE_* / KALSHI_DEMO_* / legacy names); extra literals via --literal.
 Prints file:line and the KIND of match, never the secret itself. Exit 1 if anything is found.
 """
 import argparse
@@ -15,17 +15,23 @@ PEM = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
 SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", ".venv", "node_modules"}
 
 
+ENV_PAIRS = (("KALSHI_LIVE_API_KEY_ID", "KALSHI_LIVE_PRIVATE_KEY_PATH", "live"),
+             ("KALSHI_DEMO_API_KEY_ID", "KALSHI_DEMO_PRIVATE_KEY_PATH", "demo"),
+             ("KALSHI_API_KEY_ID", "KALSHI_PRIVATE_KEY_PATH", "legacy"))
+
+
 def env_secrets():
     out = {}
-    kid = os.getenv("KALSHI_API_KEY_ID")
-    if kid and len(kid) >= 8:
-        out["api-key-id"] = kid
-    path = os.getenv("KALSHI_PRIVATE_KEY_PATH")
-    if path and os.path.exists(path):
-        for i, line in enumerate(open(path).read().splitlines()):
-            line = line.strip()
-            if len(line) >= 30 and not line.startswith("-----"):
-                out[f"pem-line-{i}"] = line
+    for id_var, path_var, tag in ENV_PAIRS:
+        kid = os.getenv(id_var)
+        if kid and len(kid) >= 8:
+            out[f"{tag}-api-key-id"] = kid
+        path = os.getenv(path_var)
+        if path and os.path.exists(path):
+            for i, line in enumerate(open(path).read().splitlines()):
+                line = line.strip()
+                if len(line) >= 30 and not line.startswith("-----"):
+                    out[f"{tag}-pem-line-{i}"] = line
     return out
 
 

@@ -15,8 +15,9 @@ import sys
 
 import requests
 
+import credentials
 from engine import KILL_FILE
-from kalshi_client import Kalshi, KalshiError, quotes
+from kalshi_client import KalshiError, quotes
 from signals import SERIES
 
 
@@ -77,9 +78,18 @@ def main(argv=None, client=None):
         print("[2] board disarmed" if disarm_board(a.host, a.port, os.getenv("BOARD_TOKEN")) else "[2] board answered but did not disarm")
     except requests.RequestException:
         print("[2] board not reachable (fine if the bot is stopped; the KILL file still blocks it)")
-    client = client or Kalshi.from_env()
+    if client is None:
+        live_vars = [v for v in ("KALSHI_LIVE_API_KEY_ID", "KALSHI_LIVE_PRIVATE_KEY_PATH") if os.getenv(v)]
+        if not live_vars:
+            print("[3] no KALSHI_LIVE_* credentials in env: nothing to cancel on Kalshi")
+            return 0
+        try:
+            client = credentials.load("live")
+        except credentials.CredentialError as e:
+            print(f"[3] COULD NOT LOAD LIVE CREDENTIALS ({e}): resting orders were NOT cancelled. Cancel manually at kalshi.com.")
+            return 1
     if not (client.key and client.key_id):
-        print("[3] no API credentials in env: nothing to cancel on Kalshi")
+        print("[3] no API credentials: nothing to cancel on Kalshi")
         return 0
     try:
         client.cancel_all_orders()

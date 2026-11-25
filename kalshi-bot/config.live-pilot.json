@@ -1,0 +1,16 @@
+{
+  "trading": "live",
+  "mode": "conservative",
+  "assets": ["BTC"],
+  "size_per_trade_usd": 1,
+  "daily_loss_cap_usd": 2,
+  "max_losses_in_row": 2,
+  "poll_seconds": 2,
+  "hard_max_price": 0.95,
+  "stale_seconds": 5,
+  "basis_bps": 2.0,
+  "shrink": 0.9,
+  "momentum_weight": 0.0,
+  "max_disagreement": 0.30,
+  "record_snapshots": true
+}

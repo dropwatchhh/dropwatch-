@@ -27,7 +27,7 @@ It is modelled on the feature list of NeuroBot's public page, but the strategy i
 cd kalshi-bot
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest                      # 96 tests, all network mocked
+pytest                      # 236 tests, all network mocked
 ```
 
 ### Create a Kalshi API key (needed only for live trading)
@@ -37,12 +37,16 @@ pytest                      # 96 tests, all network mocked
    (`chmod 600`). Note the **Key ID**.
 3. **Fund a small, dedicated balance** (for example $25–50). The bot can only lose what is in the account,
    so keep the account balance close to what you are willing to lose.
-4. Export the credentials (never commit them; `.gitignore` already excludes `*.pem`, `.env`, `state.json`, CSVs):
+4. Export the credentials (never commit them; `.gitignore` already excludes `*.pem`, `.env`, `state.json`, CSVs). **Live and demo
+   use separate variables and must never be in the same process** (see `PILOT.md`):
 
 ```bash
-export KALSHI_API_KEY_ID="your-key-id"
-export KALSHI_PRIVATE_KEY_PATH="$HOME/secrets/kalshi_key.pem"
+export KALSHI_LIVE_API_KEY_ID="your-key-id"
+export KALSHI_LIVE_PRIVATE_KEY_PATH="$HOME/secrets/kalshi_live.pem"     # on Render: the Secret File path
+# demo (fake money) only, in a different shell:  KALSHI_DEMO_API_KEY_ID / KALSHI_DEMO_PRIVATE_KEY_PATH
 ```
+
+The old `KALSHI_API_KEY_ID` / `KALSHI_PRIVATE_KEY_PATH` names are refused as ambiguous.
 
 The key is used only to sign requests; it is never printed or logged.
 
@@ -75,13 +79,13 @@ python history.py --rounds 700 --out hist
 python backtest.py --trades hist_trades.csv --snapshots hist_snaps.csv --replay --mode balanced
 ```
 
-## Going live
+## Going live (see `PILOT.md` for the locked-down pilot, which is the only live mode)
 
 All of these must be true or the bot stays in paper mode:
 
 1. `config.json` has `"trading": "live"`, **and**
 2. you start it with `--live`, **and**
-3. `KALSHI_API_KEY_ID` / `KALSHI_PRIVATE_KEY_PATH` are set.
+3. `KALSHI_LIVE_API_KEY_ID` / `KALSHI_LIVE_PRIVATE_KEY_PATH` are set (and no `KALSHI_DEMO_*` in that process).
 
 ```bash
 python bot.py --live

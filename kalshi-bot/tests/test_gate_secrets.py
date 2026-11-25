@@ -27,8 +27,10 @@ def secrets_env(tmp_path, monkeypatch):
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
     (tmp_path / "k.pem").write_bytes(pem)
-    monkeypatch.setenv("KALSHI_API_KEY_ID", CANARY_ID)
-    monkeypatch.setenv("KALSHI_PRIVATE_KEY_PATH", str(tmp_path / "k.pem"))
+    monkeypatch.setenv("KALSHI_LIVE_API_KEY_ID", CANARY_ID)
+    monkeypatch.setenv("KALSHI_LIVE_PRIVATE_KEY_PATH", str(tmp_path / "k.pem"))
+    for v in ("KALSHI_DEMO_API_KEY_ID", "KALSHI_DEMO_PRIVATE_KEY_PATH", "KALSHI_API_KEY_ID", "KALSHI_PRIVATE_KEY_PATH"):
+        monkeypatch.delenv(v, raising=False)
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
@@ -38,17 +40,19 @@ def test_auditor_is_not_vacuous(tmp_path, secrets_env):
     (secrets_env / "leak2.txt").write_text((secrets_env / "k.pem").read_text().splitlines()[1] + "\n")
     (secrets_env / "leak3.txt").write_text("-----BEGIN " + "PRIVATE KEY-----\nabc\n")
     hits = audit_secrets.scan_paths([str(secrets_env / n) for n in ("leak.txt", "leak2.txt", "leak3.txt")], audit_secrets.env_secrets())
-    kinds = {k.split("-")[0] for _, _, k in hits}
-    assert len(hits) >= 3 and "api" in kinds and "pem" in kinds and "PEM private key block" in {k for _, _, k in hits}
+    kinds = {k for _, _, k in hits}
+    assert len(hits) >= 3 and "live-api-key-id" in kinds and any(k.startswith("live-pem-line") for k in kinds) \
+        and "PEM private key block" in kinds
 
 
 def test_full_exercise_leaks_nothing(secrets_env):
     """Run signing, errors, trading, settlement, state/CSV writing and board; scan everything."""
     out = secrets_env / "artifacts"
     out.mkdir()
-    client = Kalshi.from_env()
+    import credentials
+    client = credentials.load("live")
     assert client.key and client.key_id == CANARY_ID
-    texts = [repr(client), str(client.__dict__.keys())]
+    texts = [repr(client), str(client.__dict__.keys()), client.fingerprint]
     # errors of every flavour: their messages must not contain headers/keys
     for h in (lambda m, u: Resp(401, {"error": {"code": "bad_signature", "message": "invalid"}}),
               lambda m, u: (_ for _ in ()).throw(requests.ConnectionError("boom")),

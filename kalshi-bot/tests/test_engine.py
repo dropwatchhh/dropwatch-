@@ -8,13 +8,14 @@ from engine import (Ctx, DEFAULTS, State, cash_out, enter, finalize_round, load_
                     process_asset, reconcile, resolve_live, settle_pending)
 from kalshi_client import KalshiError, trade_fee
 from signals import Feed
-from tests.helpers import FakeClient, NoOrdersClient, iso, mkmarket, mkround, mkstate
+from tests.helpers import FakeClient, NoOrdersClient, iso, mkmarket, mkround, mkstate, mklive, strong
 
 T = "KXBTC15M-T1"
 
 
-def buy(st, client=None, live=False, ticker=T, side="yes", price=0.8, size=500, reason="t"):
-    return enter(client or NoOrdersClient(), st, live, ticker, side, price, size, 1.0, reason)
+def buy(st, client=None, live=None, ticker=T, side="yes", price=0.8, size=500, reason="t"):
+    live = st.live if live is None else live
+    return enter(client or NoOrdersClient(), st, live, ticker, side, price, size, 1.0, reason, signal=strong(ticker) if live else None)
 
 
 # ---------------------------------------------------------------- live gating
@@ -135,18 +136,18 @@ def test_state_persists_and_day_mismatch_discards_pnl(tmp_path):
 
 # ---------------------------------------------------------------- live order handling
 def test_live_fill_converts_yes_leg_price_for_no_side(tmp_path):
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path)
     mkround(st)
     c = FakeClient()
-    c.order_result = {"fill_count": "6.00", "average_fill_price": "0.7000", "average_fee_paid": "0.0100"}
+    c.order_result = {"fill_count": "1.00", "average_fill_price": "0.7000", "average_fee_paid": "0.0100"}
     assert buy(st, c, live=True, side="no", price=0.30)
     p = st.rounds[T]["pos"]
-    assert c.orders == [(T, "no", "buy", 15, 0.30)] and p["count"] == 6
-    assert p["price"] == pytest.approx(0.30) and p["fee"] == pytest.approx(0.06)
+    assert c.orders == [(T, "no", "buy", 1, 0.30)] and p["count"] == 1      # pilot: exactly one contract
+    assert p["price"] == pytest.approx(0.30) and p["fee"] == pytest.approx(0.01)
 
 
 def test_live_unfilled_ioc_leaves_no_position_and_no_retry(tmp_path):
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path)
     mkround(st)
     c = FakeClient()
     c.order_result = {"fill_count": "0.00"}
@@ -155,7 +156,7 @@ def test_live_unfilled_ioc_leaves_no_position_and_no_retry(tmp_path):
 
 
 def test_live_ambiguous_order_halts_and_disarms(tmp_path):
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path)
     mkround(st)
     c = FakeClient()
     c.order_error = KalshiError("timeout", ambiguous=True)
@@ -166,7 +167,7 @@ def test_live_ambiguous_order_halts_and_disarms(tmp_path):
 
 
 def test_live_rejection_does_not_halt(tmp_path):
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path)
     mkround(st)
     c = FakeClient()
     c.order_error = KalshiError("HTTP 400 invalid_price", 400, "invalid_price")
@@ -273,9 +274,10 @@ def test_cash_out_works_when_disarmed_and_uses_no_bid_for_no_side(tmp_path):
 
 
 def test_live_partial_cash_out_keeps_remainder(tmp_path):
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path, size_per_trade_usd=20)
+    st.pilot.limits.update(stake_usd=20, contracts=20, daily_pause_usd=100, hard_stop_usd=100)    # test-only: allow >1 contract to exercise partial fills
     r = mkround(st)
-    buy(st, price=0.50)
+    buy(st, FakeClient(), price=0.50)
     n = r["pos"]["count"]
     c = FakeClient()
     c.markets[T] = mkmarket(T, 0.55, 0.57)

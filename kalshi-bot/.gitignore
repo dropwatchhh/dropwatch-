@@ -11,3 +11,8 @@ __pycache__/
 hist_*.csv
 hist*.csv
 .coverage
+pilot.json
+live_ledger.jsonl
+postmortems.jsonl
+preflight.json
+KILL

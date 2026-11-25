@@ -12,7 +12,7 @@ import board
 import kill
 from engine import Ctx, State, DEFAULTS, enter, reconcile, run_loop
 from kalshi_client import Kalshi
-from tests.helpers import FakeClient, mkmarket, mkround, mkstate
+from tests.helpers import FakeClient, mkmarket, mkround, mkstate, mklive, strong
 from tests.net import KEY, Resp, Script, good_handler
 from tests.test_gate_fail_closed import OneShot, TickFeed
 
@@ -114,14 +114,19 @@ CRASH = textwrap.dedent('''
     import os, sys
     sys.path.insert(0, {root!r})
     from engine import State, DEFAULTS, enter, new_round
+    from pilot import Pilot, STRONG
     st = State(dict(DEFAULTS), path="state.json", trades_path="t.csv", snaps_path="n.csv", kill_path="NOKILL")
-    st.armed = True
+    st.armed, st.live = True, True
+    st.pilot = Pilot(path="pilot.json"); st.pilot.live_enabled = True
+    st.live_gate = lambda: (True, "ok")
+    import time
+    sig = dict(ticker="{t}", ts=time.time(), grade=STRONG, checks=[], failed=[], flip=dict(label="SAFE TO ENTER"))
     st.rounds["{t}"] = new_round("BTC", dict(ticker="{t}", close_time="2099-01-01T00:00:00Z"), dict(time="x"), [], dict(reason="r"), st)
     class C:
         def place_order(self, *a):
             open("orders.log", "a").write("order\\n")
             os._exit(9)          # hard kill: no cleanup, no finally blocks, no atexit
-    enter(C(), st, True, "{t}", "yes", 0.8, 500, 1.0, "x")
+    enter(C(), st, True, "{t}", "yes", 0.8, 500, 1.0, "x", signal=sig)
 ''')
 
 
@@ -131,10 +136,15 @@ def test_hard_kill_during_live_order_then_restart_no_duplicate_no_lost_position(
     # --- restart
     st = State(dict(DEFAULTS), path=str(tmp_path / "state.json"), trades_path=str(tmp_path / "t.csv"),
                snaps_path=str(tmp_path / "n.csv"), kill_path=str(tmp_path / "NOKILL"))
-    st.armed = True
+    st.armed, st.live = True, True
+    from pilot import Pilot
+    st.pilot = Pilot(path=str(tmp_path / "pilot.json"))
+    st.pilot.live_enabled = True
+    st.live_gate = lambda: (True, "ok")
     assert T in st.attempted                       # write-ahead state survived the crash
+    assert st.pilot.trades_today == 1              # ...and so did the per-day order count
     spy = FakeClient()
-    assert enter(spy, st, True, T, "yes", 0.8, 500, 1.0, "retry") is False and spy.orders == []   # no duplicate
+    assert enter(spy, st, True, T, "yes", 0.8, 500, 1.0, "retry", signal=strong(T)) is False and spy.orders == []   # no duplicate
     # Kalshi says the order DID fill before the crash: reconcile adopts it
     spy.positions_list = [{"ticker": T, "position_fp": "6.00", "market_exposure_dollars": "4.80"}]
     spy.markets[T] = mkmarket(T, .7, .8)
@@ -142,7 +152,7 @@ def test_hard_kill_during_live_order_then_restart_no_duplicate_no_lost_position(
     reconcile(spy, st)
     p = st.rounds[T]["pos"]
     assert p["count"] == 6 and p["side"] == "yes" and p["price"] == pytest.approx(0.8)
-    assert enter(spy, st, True, T, "yes", 0.8, 500, 1.0, "again") is False and spy.orders == []
+    assert enter(spy, st, True, T, "yes", 0.8, 500, 1.0, "again", signal=strong(T)) is False and spy.orders == []
 
 
 def test_restart_in_paper_keeps_position_and_does_not_reenter(tmp_path):
@@ -157,10 +167,19 @@ def test_restart_in_paper_keeps_position_and_does_not_reenter(tmp_path):
 
 def test_restart_with_unfilled_order_may_retry_but_only_once_per_run(tmp_path):
     """An IOC that never filled leaves nothing on Kalshi; reconcile finds no position."""
-    st = mkstate(tmp_path)
+    st = mklive(tmp_path)
     mkround(st)
     c = FakeClient()
     c.order_result = {"fill_count": "0.00"}
-    enter(c, st, True, T, "yes", .8, 500, 1.0, "x")
+    enter(c, st, True, T, "yes", .8, 500, 1.0, "x", signal=strong(T))
     reconcile(c, st)
     assert not st.rounds[T]["pos"] and len(c.orders) == 1
+
+
+def test_kill_with_unloadable_live_credentials_says_orders_were_not_cancelled(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("KALSHI_LIVE_API_KEY_ID", "live-id-12345678")
+    monkeypatch.setenv("KALSHI_LIVE_PRIVATE_KEY_PATH", str(tmp_path / "missing.pem"))
+    assert kill.main(["--port", "1"]) == 1
+    out = capsys.readouterr().out
+    assert "NOT cancelled" in out and os.path.exists("KILL")

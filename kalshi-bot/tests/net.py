@@ -22,13 +22,17 @@ class Script:
 
     def request(self, method, url, headers=None, json=None, timeout=None):
         self.calls.append((method, url, json))
+        if method == "POST" and json and hasattr(self.handler, "last"):
+            self.handler.last["body"] = json
         return self.handler(method, url)
 
     def posts(self):
         return [c for c in self.calls if c[0] == "POST" and "/portfolio/events/orders" in c[1]]
 
 
-def good_handler(market, order_fill="3.00", positions=None, extra=None):
+def good_handler(market, order_fill="1.00", positions=None, extra=None, balance_json=None):
+    last = {}
+
     def h(method, url):
         if extra:
             r = extra(method, url)
@@ -36,12 +40,22 @@ def good_handler(market, order_fill="3.00", positions=None, extra=None):
                 return r
         if method == "POST" and url.endswith("/portfolio/events/orders"):
             return Resp(201, {"order_id": "o1", "fill_count": order_fill, "remaining_count": "0.00"})
+        if "/portfolio/fills" in url:        # consistent with the last order the script saw
+            body = last.get("body")
+            if not body:
+                return Resp(200, {"fills": []})
+            yes = float(body["price"])
+            mine = yes if body["side"] == "bid" else 1 - yes
+            from kalshi_client import trade_fee
+            return Resp(200, {"fills": [{"count_fp": order_fill, "yes_price_dollars": f"{yes:.4f}",
+                                         "no_price_dollars": f"{1 - yes:.4f}", "fee_cost": f"{trade_fee(mine, float(order_fill)):.4f}"}]})
         if method == "DELETE" and url.endswith("/portfolio/events/orders"):
             return Resp(204)
         if "/portfolio/positions" in url:
             return Resp(200, {"market_positions": positions or []})
         if "/portfolio/balance" in url:
-            return Resp(200, {"balance": 10000, "balance_dollars": "100.0000"})
+            return Resp(200, balance_json or {"balance": 1000, "balance_dollars": "10.0000", "balance_breakdown": [
+                {"exchange_index": 0, "balance": "0.0000"}, {"exchange_index": 2, "balance": "10.0000"}]})
         if "/series/" in url and "/candlesticks" not in url:
             return Resp(200, {"series": {"fee_type": "quadratic", "fee_multiplier": 1}})
         if "series_ticker=KXBTC15M" in url:
@@ -51,4 +65,5 @@ def good_handler(market, order_fill="3.00", positions=None, extra=None):
         if "/markets/" in url:
             return Resp(200, {"market": market})
         return Resp(404, {"error": {"code": "not_found", "message": "x"}})
+    h.last = last
     return h

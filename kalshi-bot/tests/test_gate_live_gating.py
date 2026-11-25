@@ -7,7 +7,7 @@ import pytest
 import bot
 import engine
 from kalshi_client import Kalshi, KalshiError
-from tests.helpers import mkmarket, mkround
+from tests.helpers import mkmarket, mkround, strong
 from tests.net import KEY, Script, good_handler
 
 T = "KXBTC15M-T1"
@@ -26,15 +26,18 @@ def test_every_combination_places_orders_only_when_both_set(tmp_path, monkeypatc
     cfg.write_text(json.dumps({"trading": trading}))
     sess = Script(good_handler(mkmarket(T, .78, .80)))
     client = Kalshi("CANARY", KEY, session=sess, sleep=lambda s: None)
-    monkeypatch.setattr(bot.Kalshi, "from_env", classmethod(lambda cls: client))
+    monkeypatch.setattr(bot, "make_client", lambda live: client)
     monkeypatch.setattr(bot.board, "serve", lambda *a, **k: DummySrv())
     seen = {}
 
     def fake_loop(ctx, stop, deadline=None):
         seen["live"], seen["allow"] = ctx.live, ctx.client.allow_orders
         ctx.st.armed = True                      # worst case: armed and eager
+        if ctx.st.pilot:
+            ctx.st.pilot.live_enabled = True     # ...and LIVE typed in
+            ctx.st.live_gate = lambda: (True, 'ok')   # this test is about the two flags, not readiness
         mkround(ctx.st, T)
-        engine.enter(ctx.client, ctx.st, ctx.live, T, "yes", 0.80, 500, 1.0, "gate test")
+        engine.enter(ctx.client, ctx.st, ctx.live, T, "yes", 0.80, 500, 1.0, "gate test", signal=strong(T))
         for live_arg in (False, True):           # a buggy caller passing the wrong flag must still be stopped
             try:
                 ctx.client.place_order(T, "yes", "buy", 1, 0.8)
@@ -73,9 +76,9 @@ def test_board_default_host_is_loopback(tmp_path, monkeypatch):
     cfg = tmp_path / "c.json"
     cfg.write_text("{}")
     client = Kalshi("k", KEY, session=Script(good_handler(mkmarket(T, .5, .6))))
-    monkeypatch.setattr(bot.Kalshi, "from_env", classmethod(lambda cls: client))
+    monkeypatch.setattr(bot, "make_client", lambda live: client)
     got = {}
-    monkeypatch.setattr(bot.board, "serve", lambda c, st, live, host, port, fm=1.0: got.setdefault("host", host) and DummySrv())
+    monkeypatch.setattr(bot.board, "serve", lambda c, st, live, host, port, fm=1.0, ctx=None: got.setdefault("host", host) and DummySrv())
     monkeypatch.setattr(bot, "run_loop", lambda ctx, stop, deadline=None: stop.set())
     bot.main(["--config", str(cfg)])
     assert got["host"] == "127.0.0.1"

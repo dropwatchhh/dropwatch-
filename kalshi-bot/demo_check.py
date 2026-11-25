@@ -3,11 +3,10 @@
 it needs demo API credentials, which only the account holder can create.
 
 Setup (once):  create a demo account + demo API key (https://docs.kalshi.com/getting_started/demo_env.md)
-  export KALSHI_BASE_URL=https://external-api.demo.kalshi.co/trade-api/v2
-  export KALSHI_API_KEY_ID=<DEMO key id>   KALSHI_PRIVATE_KEY_PATH=<DEMO key pem>
-  python demo_check.py
+  export KALSHI_DEMO_API_KEY_ID=<DEMO key id>   KALSHI_DEMO_PRIVATE_KEY_PATH=<DEMO key pem>
+  python demo_check.py          (in a shell with NO KALSHI_LIVE_* variables)
 
-Hard guard: refuses to run unless the base URL is a demo host. Each step prints PASS/FAIL with the
+Hard guard: the demo base URL is fixed in credentials.py and live variables in the same process are refused. Each step prints PASS/FAIL with the
 raw numbers; compare against the demo web UI too. Orders are tiny (1-2 contracts).
 """
 import os
@@ -27,12 +26,11 @@ def check(name, ok, detail=""):
 
 
 def main():
-    host = urlparse(os.getenv("KALSHI_BASE_URL", "")).hostname or ""
-    if not host.endswith("demo.kalshi.co"):
-        sys.exit("REFUSING: KALSHI_BASE_URL must be a demo.kalshi.co host. This script never touches production.")
-    c = Kalshi.from_env()
-    if not (c.key and c.key_id):
-        sys.exit("Set the DEMO KALSHI_API_KEY_ID / KALSHI_PRIVATE_KEY_PATH.")
+    import credentials
+    try:
+        c = credentials.load("demo")        # demo base URL is fixed; refuses if any KALSHI_LIVE_* variable is present
+    except credentials.CredentialError as e:
+        sys.exit(f"REFUSING: {e}")
     c.allow_orders = True
     c.buy_limits = (5.0, 0.99)  # tiny demo orders only
     bal0 = c.balance_usd()

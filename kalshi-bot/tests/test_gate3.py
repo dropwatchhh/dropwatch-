@@ -58,11 +58,17 @@ def test_history_source_can_never_pass(tmp_path, capsys):
     assert rc == 1 and "[FAIL] Source is real paper trading" in out and "GATE 3: FAIL" in out and ">= 300 trades" in out
 
 
-def test_demo_harness_refuses_production(monkeypatch):
+def test_demo_harness_refuses_production_or_missing_credentials(monkeypatch, tmp_path):
     import demo_check
-    for url in ("", "https://api.elections.kalshi.com/trade-api/v2", "https://external-api.kalshi.com/trade-api/v2",
-                "https://evil.com/demo.kalshi.co"):
-        monkeypatch.setenv("KALSHI_BASE_URL", url)
-        with pytest.raises(SystemExit) as e:
-            demo_check.main()
-        assert "REFUSING" in str(e.value)
+    for v in ("KALSHI_LIVE_API_KEY_ID", "KALSHI_LIVE_PRIVATE_KEY_PATH", "KALSHI_DEMO_API_KEY_ID", "KALSHI_DEMO_PRIVATE_KEY_PATH",
+              "KALSHI_API_KEY_ID", "KALSHI_PRIVATE_KEY_PATH"):
+        monkeypatch.delenv(v, raising=False)
+    with pytest.raises(SystemExit) as e:                    # no demo credentials
+        demo_check.main()
+    assert "REFUSING" in str(e.value)
+    monkeypatch.setenv("KALSHI_LIVE_API_KEY_ID", "live-id-12345678")      # a live variable present => never mix
+    monkeypatch.setenv("KALSHI_DEMO_API_KEY_ID", "demo-id-12345678")
+    monkeypatch.setenv("KALSHI_DEMO_PRIVATE_KEY_PATH", str(tmp_path / "none.pem"))
+    with pytest.raises(SystemExit) as e:
+        demo_check.main()
+    assert "never be mixed" in str(e.value)

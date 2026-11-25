@@ -5,6 +5,9 @@
 No strategy parameter was changed to improve any number (the defaults in `config.json` are the ones that were
 set before any data was looked at).
 
+**Update 2026-11-25:** a locked-down LIVE pilot was built (`PILOT.md`). It does not change this verdict: Gates 2 and 3 are still
+open, and the pilot cannot be enabled until the demo test order and shard check pass. Items below are as of the original review.
+
 Reviewed: 2026-11-22, branch `claude/kalshi-crypto-bot-y1dmpx`.
 
 | Gate | Result |
