@@ -26,7 +26,7 @@ for i in range(n):
 for i in range(1,n-1):          # no one-frame flicker
     if lip[i]!=lip[i-1] and lip[i]!=lip[i+1] and lip[i-1]==lip[i+1]: lip[i]=lip[i-1]
 amp=np.convolve(l,np.ones(3)/3,'same'); emph=np.clip((np.convolve(l,np.ones(5)/5,'same')-0.55)/0.25,0,1)
-shots=[('S1',0.0,2.2),('S8',2.2,3.6),('S2',3.6,5.1),('S3',5.1,6.6),('S4',6.6,8.3),('S7',8.3,9.7),('S5',9.7,11.3),('S6',11.3,12.0)]
+shots=[('S1',0.0,1.9),('S9',1.9,2.9),('S8',2.9,3.6),('S2',3.6,5.1),('S3',5.1,6.6),('S4',6.6,8.3),('S7',8.3,9.7),('S5',9.7,11.3),('S6',11.3,12.0)]
 blink={int(t*FPS)+k for t in (1.1,2.9,4.6,6.2,7.4,8.9,10.2) for k in range(3)}
 lot={"job":{"scene":"lot","vanX":0}}; cab={"job":{"scene":"cab"}}
 fr=[]

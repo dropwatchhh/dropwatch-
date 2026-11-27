@@ -3,11 +3,11 @@ import sys, os, subprocess
 from PIL import Image, ImageDraw, ImageFont
 F=lambda w,s: ImageFont.truetype(f"/usr/share/fonts/opentype/inter/Inter-{w}.otf", s)
 FR='frames'; OUT='ov'; os.makedirs(OUT,exist_ok=True)
-LOT={'S1','S8','S2','S3','S4','S6','S7'}
+LOT={'S1','S9','S8','S2','S3','S4','S6','S7'}
 CHAT=[(2.6,"mia.moon",(255,150,200),"he said ANYTHING lol"),(4.1,"bigmaple44",(255,210,90),"wait what is behind him"),(7.3,"noodle_nate",(255,170,110),"DEX BEHIND U"),(9.2,"mia.moon",(255,150,200),"THE VAN")]
 def pill(d,b,fill): d.rounded_rectangle(b,radius=(b[3]-b[1])//2,fill=fill)
 def shot_of(g):
-    for s,a,b in [('S1',0,2.2),('S8',2.2,3.6),('S2',3.6,5.1),('S3',5.1,6.6),('S4',6.6,8.3),('S7',8.3,9.7),('S5',9.7,11.3),('S6',11.3,12.1)]:
+    for s,a,b in [('S1',0,1.9),('S9',1.9,2.9),('S8',2.9,3.6),('S2',3.6,5.1),('S3',5.1,6.6),('S4',6.6,8.3),('S7',8.3,9.7),('S5',9.7,11.3),('S6',11.3,12.1)]:
         if a<=g<b: return s
 def draw(im,g):
     W,H=im.size; ov=Image.new('RGBA',im.size,(0,0,0,0)); d=ImageDraw.Draw(ov); s=shot_of(g)
@@ -40,5 +40,5 @@ import glob
 files=sorted(glob.glob(f'{FR}/f*.png')); print(len(files),'rendered frames (12 fps)')
 for k,p in enumerate(files):
     n=int(os.path.basename(p)[1:5]); draw(Image.open(p),n/24).save(f'{OUT}/{k:04d}.png')
-subprocess.run(['ffmpeg','-y','-v','error','-framerate','12','-i',f'{OUT}/%04d.png','-i','audio_final.wav','-vf','framerate=fps=24:interp_start=0:interp_end=255:scene=100','-c:v','libx264','-pix_fmt','yuv420p','-crf','17','-preset','medium','-c:a','aac','-b:a','192k','-t','12','../output/dex_test_v3_12fps_blend.mp4'])
+subprocess.run(['ffmpeg','-y','-v','error','-framerate','12','-i',f'{OUT}/%04d.png','-i','audio_final.wav','-vf','framerate=fps=24:interp_start=0:interp_end=255:scene=100','-c:v','libx264','-pix_fmt','yuv420p','-crf','17','-preset','medium','-c:a','aac','-b:a','192k','-t','12','../output/dex_test_v4_12fps_blend.mp4'])
 print('done')
