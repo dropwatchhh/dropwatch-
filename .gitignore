@@ -9,3 +9,4 @@ test10/ov/
 test10/*.wav
 voice/qwen/
 voice/kokoro/
+__pycache__/
