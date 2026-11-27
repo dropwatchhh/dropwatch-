@@ -75,7 +75,23 @@ Assume a 45-second episode of about 25 shots.
 
 From episode 2 on, the first 3 seconds show the winning comment as a card ("You picked BORROW").
 
-**Posting schedule:** Monday, Wednesday, Friday at 6:00 pm Eastern. You post manually. Vote window is about 24–48 hours.
+**Posting schedule: one episode every day at 2:00 PM Eastern.** You schedule it in TikTok Studio. Daily is realistic only with the buffer and deadlines below.
+
+| Time (Eastern) | What happens |
+|---|---|
+| Day D, 2:00 PM | Episode D goes live. Vote opens. |
+| Day D, **8:00 PM** | **Comment screenshots due** (6 hours of votes). Send the top comments with like counts. |
+| Day D, evening | I send the script and shot list for Episode D+1 in the same reply. |
+| Day D+1, **by 9:00 AM** | You approve or edit the script. |
+| Day D+1, 9:00–11:00 AM | I render, watch it back, fix problems and send the video. |
+| Day D+1, **by 12:30 PM** | You approve the video. |
+| Day D+1, **by 1:00 PM** | You schedule or upload it in TikTok Studio for 2:00 PM. This leaves a one-hour safety margin. |
+
+I only work when you message me in this session. I can't act between your messages, so the times above are your deadlines to send things, not times I run on my own.
+
+**How far ahead we need to work:** the toolkit (final Dex, Nana Dot, Gig, Priya, the van and stage sets, caption and vote-card templates, voice and music) must be finished **before Day 1**, plus **3 banked fallback episodes** that don't depend on a vote (for example "Gig's van tour", "Nana Dot's rules"). A vote-dependent episode can only be made about 18 hours ahead, so the bank is what covers a missed deadline. If the screenshots arrive after 10:00 PM, or an approval is late, you post a banked episode and the vote carries over to the next day.
+
+**Honest cost:** about 30–45 minutes a day from you for 30 days (screenshots, two approvals, upload). A 6-hour vote window means small vote counts at first. If daily proves too heavy, the fallback is every other day with a 24-hour vote window.
 
 ## 4. Free-only workflow, with manual fallbacks
 
