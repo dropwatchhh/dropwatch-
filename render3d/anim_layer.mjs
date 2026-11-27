@@ -20,7 +20,7 @@ const SH = {   // camera keys for a 1.78 m Dex (face centre about y=1.58), van 5
   S3: { pos: [[0.5, 1.2, 3.0], [0.25, 1.25, 2.5]], look: [[0, 1.25, 0], [0, 1.28, 0]], fov: 44 },
   S4: { pos: [[-3.0, 1.35, 3.0], [-2.8, 1.35, 3.0]], look: [[4.1, 0.9, -2.7], [5.4, 0.9, -3.2]], fov: 44 },
   S7: { pos: [[0.6, 1.25, 3.0], [0.3, 1.3, 2.3]], look: [[0, 1.2, 0], [0.1, 1.25, 0]], fov: 44 },
-  S5: { pos: [[0.9, 1.6, -0.9], [0.75, 1.55, -0.8]], look: [[-0.45, 1.4, -0.1], [-0.45, 1.4, -0.1]], fov: 50 },
+  S5: { pos: [[0.9, 1.6, -0.9], [0.75, 1.55, -0.8]], look: [[0.1, 1.4, -0.3], [0.1, 1.4, -0.3]], fov: 50 },
   S6: { pos: [[-4.2, 0.45, 1.8], [-3.8, 0.5, 1.7]], look: [[2.0, 0.9, -1.5], [3.0, 0.9, -1.9]], fov: 44 },
 };
 export function install(E) {
@@ -42,17 +42,37 @@ export function install(E) {
       else { pose = mix(P.rock, P.rock, 0); pose.legL = leg(8 + wob(2, 4), 24, 28 + wob(2, 8)); pose.R.sh = [165 + wob(2, 6), 18]; face.mouth = 'mouth_grin_open'; }
       setPose(H.dex, pose); setFace(H.dex, face);
     }
-    // ---- Gig (cab shot): driving, chewing a noodle, bumped by the road
+    // ---- Gig (cab shot): seated, both paws gripping the wheel rim (IK) as it turns, eyes on the road
     if (shot === 'S5' && H.gig) {
-      const ch = Math.floor(g * 6) % 2 ? 'mouth_chitter' : 'mouth_closed';
-      setGigFace(H.gig, { eyes: blink ? 'eyes_closed' : 'eyes_wide', mouth: ch });
-      const bump = wob(3.1, 4) + wob(5.3, 2);
-      setGigPose(H.gig, { spine: [wob(0.9, 2), wob(0.6, 2), 0], head: [wob(1.1, 4) - 4, -4 + wob(0.5, 6) + 12 * e, wob(0.7, 4)], L: { sh: [78 + bump, 6], el: 32, curl: 1 }, R: { sh: [78 - bump, 6], el: 32, curl: 1 }, legL: { hip: 85, knee: 80 + wob(2.2, 8) }, legR: { hip: 85, knee: 80 }, tail: [20 + wob(2.2, 12), wob(1.2, 6)] });
+      const T = E.THREE, D = Math.PI / 180, ch = Math.floor(g * 1.5) % 2 ? 'mouth_smile' : 'mouth_closed';
+      setGigFace(H.gig, { eyes: blink ? 'eyes_closed' : 'eyes_open', mouth: ch });
+      const steer = 0.5 + 0.55 * Math.sin(g * 1.6) + 0.15 * Math.sin(g * 5.3);
+      if (H.wheel) H.wheel.rotation.z = steer;
+      setGigPose(H.gig, { spine: [-4 + wob(1.1, 1.2), 0, 0], head: [-3 + wob(1.3, 1.5), wob(0.4, 1.2), 0], L: { sh: [40, 10], el: 60, curl: 1 }, R: { sh: [40, 10], el: 60, curl: 1 }, legL: { hip: 85, knee: 80 }, legR: { hip: 85, knee: 80 }, tail: [20 + wob(2.2, 8), wob(1.2, 6)] });
+      scene.updateMatrixWorld(true);
+      for (const [k, th] of [['L', 2.85], ['R', 0.3]]) {
+        const a = H.gig.j.arms[k], s = a.s;
+        const target = H.wheel.localToWorld(new T.Vector3(0.62 * Math.cos(th), 0.62 * Math.sin(th), 0));
+        let x = a._ik ?? [45, 20, 70];
+        const apply = (v) => { a.sh.rotation.set(-v[0] * D, 0, s * v[1] * D); a.el.rotation.set(-v[2] * D, 0, 0); H.gig.root.updateMatrixWorld(true); const p = new T.Vector3(0, -0.1, 0); a.wr.localToWorld(p); return p; };
+        for (let it = 0; it < 18; it++) {
+          const p = apply(x), er = target.clone().sub(p); if (er.length() < 2e-3) break;
+          const J = [0, 1, 2].map(i => { const y = x.slice(); y[i] += 1; return apply(y).sub(p); });
+          const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], bb = [0, 0, 0];
+          for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) A[i][j] = J[i].dot(J[j]) + (i === j ? 1e-4 : 0); bb[i] = J[i].dot(er); }
+          const det = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+          const d0 = det(A), dx = [0, 1, 2].map(c => det(A.map((row, r) => row.map((v, cc) => cc === c ? bb[r] : v))) / d0);
+          x = x.map((v, i) => v + Math.max(-12, Math.min(12, dx[i])));
+          x[0] = Math.max(-30, Math.min(150, x[0])); x[1] = Math.max(-20, Math.min(100, x[1])); x[2] = Math.max(0, Math.min(150, x[2]));
+        }
+        a._ik = x; const pf = apply(x); if (f.n % 12 === 0) console.error('IKERR', k, (target.distanceTo(pf) * 1000).toFixed(1), 'mm(local units *1000)', x.map(v => v.toFixed(0)).join(','));
+      }
     }
     // ---- camera: eased move + hand-held drift
     const c = SH[shot]; const L = (a, b) => a.map((x, i) => lerp(x, b[i], e));
     let pos = L(c.pos[0], c.pos[1]), look = L(c.look[0], c.look[1]);
     pos[0] += wob(0.7, 0.012); pos[1] += wob(0.9, 0.01); look[1] += wob(0.6, 0.01);
+    if (shot === 'S5' && H.wheel && H.gig) { const W = new E.THREE.Vector3(), G = new E.THREE.Vector3(); H.wheel.getWorldPosition(W); H.gig.j.head.getWorldPosition(G); const mid = W.clone().add(G).multiplyScalar(0.5); const o = f.camOff ?? [-1.15, 0.12, 0.15]; look = [mid.x, mid.y - 0.05, mid.z]; pos = [mid.x + o[0] - 0.1 * e, mid.y + o[1], mid.z + o[2]]; c.fov = f.fov ?? 38; }
     if (f.camTest) { pos = f.camTest[0]; look = f.camTest[1]; c.fov = f.camTest[2]; }
     camera.fov = c.fov; camera.updateProjectionMatrix(); camera.position.set(...pos); camera.lookAt(...look);
     if (f.roll) camera.rotateZ(f.roll * Math.PI / 180);

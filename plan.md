@@ -235,3 +235,6 @@ The low end assumes steady-state rendering about 20% faster than these still tim
 - Generate each scene's Dex lines in one flowing pass (no "..." in the text), then tighten. Regenerate any line that still sounds unnatural.
 - Tighter audio makes the episode shorter, so fill the time with more action beats and dialogue (more lines for Dex, Lena, Nana, GPS) rather than slowing it down. Episodes must stay at least 62 s.
 - Lip-sync, captions, camera cuts and actions are retimed from the final audio, never the other way round.
+
+## 13. Voice A is locked
+Approved voice: Qwen3-TTS VoiceDesign "voice A" (British, raspy, cocky), generated with the "flow" instruction and seed 3, in the approved "sample 2" delivery. Do not change the voice description, seed, or processing. New lines use the same description and seed 3, one flowing pass per scene, then `test10/tighten.py` (pauses 0.1–0.25 s, at most 0.4 s before a punchline), then -14 LUFS.

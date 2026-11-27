@@ -1,6 +1,7 @@
 // Dex Hollow v2: original neon-punk rockstar, rigged. three.js, y up, faces +z.
 // Rig: chest/neck/head, shoulders/elbows/wrists/fingers, hips/knees/ankles; expression + pose API.
 import * as THREE from 'three';
+import { buildJacket } from './jacket.mjs';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -65,7 +66,7 @@ function rbox(mat, w, h, d, x, y, z, r = 0.03) {
 function tube(mat, pts, r, seg = 40, closed = false) {
   return new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), closed), seg, r, 8, closed), mat);
 }
-function pivot(parent, x = 0, y = 0, z = 0) { const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g); return g; }
+function pivot(parent, x = 0, y = 0, z = 0) { const g = new THREE.Bone(); g.position.set(x, y, z); parent.add(g); return g; }
 
 // tapered tube with vertex colours base -> tip
 function taperGeo(points, r0, cBase, cTip, radial = 6, segs = 14) {
@@ -144,7 +145,7 @@ export function buildPerson(opts = {}) {
   const chest = pivot(root, 0, WAIST, 0); const ci = pivot(chest, 0, -1.15 * YS, 0); ci.scale.set(XS, YS, XS); rig.j.chest = chest;
   // tee body
   const teeProf = [[0.43, 0], [0.43, 0.2], [0.4, 0.42], [0.36, 0.62], [0.27, 0.74], [0.17, 0.8]].map(([r, y]) => new THREE.Vector2(r * 0.93, y));
-  const tee = new THREE.Mesh(new THREE.LatheGeometry(teeProf, 40), M.tee); tee.geometry.scale(1, 1, 0.72); tee.position.y = 1.04; ci.add(tee);
+  const tee = new THREE.Mesh(new THREE.LatheGeometry(teeProf, 40), M.tee); { const tp = tee.geometry.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = Math.min(1, Math.max(0, (y - 0.5) / 0.28)), sm = k * k * (3 - 2 * k); tp.setX(i, tp.getX(i) * (0.88 + 0.14 * sm)); tp.setZ(i, tp.getZ(i) * (0.5 + 0.5 * sm)); } tee.geometry.computeVertexNormals(); } tee.position.y = 1.04; ci.add(tee);
   const chev = new THREE.Shape(); chev.moveTo(-0.075, -0.02); chev.lineTo(0, 0.075); chev.lineTo(0.075, -0.02); chev.lineTo(0.048, -0.02); chev.lineTo(0, 0.038); chev.lineTo(-0.048, -0.02); chev.closePath();
   const ch = new THREE.Mesh(new THREE.ExtrudeGeometry(chev, { depth: 0.012, bevelEnabled: false }), M.white); ch.position.set(0, 1.46, 0.262); if (PUNK) ci.add(ch);
   // jacket: tailored lathe, flared hem, open front gap
@@ -175,7 +176,7 @@ export function buildPerson(opts = {}) {
   // ---------- arms
   const arms = {};
   for (const s of [-1, 1]) {
-    const sh = pivot(chest, s * 0.4 * XS, (1.68 - 1.15) * YS, 0.0);
+    const sh = pivot(chest, s * 0.5, (1.68 - 1.15) * YS, 0.0);
     sh.add(ell(M.leatherS, 0.15, 0.15, 0.15, 0, 0, 0, 28));
     const up = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.108, UA, 28, 4), M.leatherS); up.position.y = -UA / 2; up.scale.set(1.25, 1, 1.25); sh.add(up);
     const el = pivot(sh, 0, -UA, 0); el.add(ell(M.leatherS, 0.134, 0.134, 0.134, 0, 0, 0, 28));
@@ -244,6 +245,16 @@ export function buildPerson(opts = {}) {
     const patch = ell(cream, 0.07, 0.05, 0.015, -0.24, 1.55, 0.33, 16); ci.add(patch);
   }
   if (opts.pearls) { for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2; ci.add(ell(std(0xf3efe6, { roughness: 0.25 }), 0.022, 0.022, 0.022, Math.sin(a) * 0.17, 1.88, Math.cos(a) * 0.17 * 0.9 + 0.02, 10)); } }
+  if (opts.jacketV2 !== false) {   // replace the old tube/lathe jacket by the skinned fitted jacket
+    const hide = new Set([M.leather, M.leatherS, M.leatherD, M.metal, M.pink, M.teal, M.black]);
+    for (const top of [ci, arms.L.sh, arms.R.sh]) top.traverse(o => { if (!o.isMesh) return; const m = o.material; if (hide.has(m) || (m === M.white && o !== ch) || (m.color && m.color.getHex() === 0xf4ead4)) o.visible = false; });
+    hips.children[0].scale.x *= 0.9; hips.children[0].scale.z *= 0.8;
+    hips.children.slice(1).forEach(o => { o.visible = false; });   // belt, buckle and chain sit under the jacket
+    for (const k of ['L', 'R']) { const w = arms[k].wr; const fa = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.092, 0.16, 20), M.skin); fa.position.y = -0.03; w.add(fa); const wm = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 12), M.skin); wm.scale.set(1, 0.7, 1); wm.position.y = -0.1; w.add(wm); }
+    root.updateMatrixWorld(true);
+    const J = buildJacket(rig, { bones: [chest, arms.L.sh, arms.L.el, arms.R.sh, arms.R.el] }, M, { punk: PUNK, lapels: opts.lapels, rib: !!opts.bowling });
+    for (const m of J.meshes) { root.add(m); } root.updateMatrixWorld(true); for (const m of J.meshes) m.bind(J.skeleton); rig.jacket = J;
+  }
   rig.L1 = L1; rig.L2 = L2; rig.root.scale.setScalar(opts.scale ?? 1); rig.M = M;
   return rig;
 }

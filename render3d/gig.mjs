@@ -18,17 +18,17 @@ export function buildGig(opts = {}) {
   const body = pivot(root, 0, 0, 0); rig.j.body = body;
   const torso = pivot(body, 0, 1.0, 0); torso.add(ell(fur, 0.56, 0.62, 0.46, 0, 0, 0, 36), ell(light, 0.36, 0.44, 0.1, 0, -0.04, 0.38, 24)); rig.j.torso = torso;
   // fur tufts (instanced) so the silhouette is fuzzy
-  const tuftGeo = new THREE.ConeGeometry(0.011, 0.06, 5); tuftGeo.translate(0, 0.028, 0); tuftGeo.computeVertexNormals();
+  const tuftGeo = new THREE.ConeGeometry(0.006, 0.027, 5); tuftGeo.translate(0, 0.012, 0); tuftGeo.computeVertexNormals();
   const tufts = (parent, rx, ry, rz, n, cx, cy, cz, skip) => { const im = new THREE.InstancedMesh(tuftGeo, new THREE.MeshStandardMaterial({ color: furC, roughness: 1, flatShading: false }), n), m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0); let k = 0;
     while (k < n) { const v = new THREE.Vector3(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1); if (v.length() > 1 || v.length() < 0.2) continue; v.normalize(); if (skip && skip(v)) continue;
       const p = new THREE.Vector3(v.x * rx, v.y * ry, v.z * rz).add(new THREE.Vector3(cx, cy, cz)); const nrm = new THREE.Vector3(v.x / rx, v.y / ry, v.z / rz).normalize(); q.setFromUnitVectors(up, nrm);
       m.compose(p, q, new THREE.Vector3(0.9 + R() * 0.6, 0.7 + R() * 0.9, 0.9 + R() * 0.6)); im.setMatrixAt(k++, m); } parent.add(im); };
-  tufts(torso, 0.56, 0.62, 0.46, 5500, 0, 0, 0, v => v.z > 0.5 && Math.abs(v.x) < 0.75);
+  tufts(torso, 0.56, 0.62, 0.46, 20000, 0, 0, 0, v => v.z > 0.5 && Math.abs(v.x) < 0.75);
 
   // ---- head (neck pivot), ears, mask, muzzle, cap
   const neck = pivot(torso, 0, 0.58, 0.05); rig.j.neck = neck; const head = pivot(neck, 0, 0.55, 0.02); rig.j.head = head;
   head.add(ell(fur, 0.62, 0.52, 0.54, 0, 0, 0, 40));
-  tufts(head, 0.62, 0.52, 0.54, 5500, 0, 0, 0, v => v.z > 0.4 && Math.abs(v.x) < 0.9 && v.y < 0.75);
+  tufts(head, 0.62, 0.52, 0.54, 9000, 0, 0, 0, v => v.z > 0.4 && Math.abs(v.x) < 0.9 && v.y < 0.75);
   for (const s of [-1, 1]) {
     head.add(ell(fur, 0.17, 0.2, 0.1, s * 0.4, 0.5, -0.05, 20), ell(dark, 0.11, 0.14, 0.06, s * 0.4, 0.5, 0.0, 16), ell(light, 0.04, 0.2, 0.05, s * 0.51, 0.52, -0.03, 10));      // ears
     const m = ell(dark, 0.22, 0.15, 0.11, s * 0.25, 0.08, 0.43, 22); m.rotation.z = -s * 0.35; head.add(m);                                                                 // mask
@@ -51,10 +51,10 @@ export function buildGig(opts = {}) {
   mouthGroup('mouth_chitter', g => { g.add(ell(dark, 0.14, 0.1, 0.04, 0, -0.27, 0.57, 18), ell(pinkM, 0.08, 0.04, 0.02, 0, -0.31, 0.59, 10), ell(white, 0.03, 0.025, 0.012, -0.05, -0.2, 0.6, 8), ell(white, 0.03, 0.025, 0.012, 0.05, -0.2, 0.6, 8)); });
   mouthGroup('mouth_smile', g => g.add(tube(dark, [[-0.16, -0.19, 0.57], [-0.08, -0.26, 0.6], [0.08, -0.26, 0.6], [0.16, -0.19, 0.57]], 0.009, 12)));
   // cap (tilted baseball cap with a brim)
-  const cap = pivot(head, 0, 0.1, 0.02); cap.rotation.z = -0.1;
+  const cap = pivot(head, 0, 0.1, -0.02); cap.rotation.z = -0.08;
   const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 20, 0, Math.PI * 2, 0, 1.2), capM); dome.scale.set(1.06, 0.78, 1.0); cap.add(dome);
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.5, 0.045, 28, 1, false, -Math.PI / 2 - 1.2, 2.4), capM); brim.scale.z = 1.0; brim.position.set(0, 0.03, 0.5); brim.rotation.x = 0.12; brim.scale.set(1, 1, 0.7); cap.add(brim);
-  cap.add(ell(teal, 0.1, 0.07, 0.02, 0, 0.2, 0.52, 14), tube(teal, [[-0.58, 0.12, 0.1], [0, 0.0, 0.6], [0.58, 0.12, 0.1]], 0.012, 20));
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.5, 0.045, 28, 1, false, -Math.PI / 2 - 1.2, 2.4), capM); brim.scale.z = 1.0; brim.position.set(0, 0.2, 0.36); brim.rotation.x = -0.02; brim.scale.set(1, 1, 0.5); cap.add(brim);
+  cap.add(ell(teal, 0.1, 0.07, 0.02, 0, 0.2, 0.5, 14));
 
   // ---- arms (shoulder, elbow, paw with 4 fingers + thumb)
   const arms = {};
