@@ -8,10 +8,12 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const root = path.dirname(new URL(import.meta.url).pathname);
 const [outDir, jobsJson, page = 'stage2.html'] = process.argv.slice(2);
 const jobs = JSON.parse(jobsJson);
-const types = { '.html': 'text/html', '.mjs': 'text/javascript', '.js': 'text/javascript' };
+const types = { '.html': 'text/html', '.mjs': 'text/javascript', '.js': 'text/javascript', '.glb': 'model/gltf-binary', '.json': 'application/json', '.png': 'image/png' };
 const server = http.createServer((q, r) => {
-  const f = path.join(root, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, ''));
-  if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); }
+  const rel = decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '');
+  const base = rel.startsWith('assets/') ? path.join(root, '..') : root;
+  const f = path.join(base, rel);
+  if (!f.startsWith(base) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); }
   r.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
 }).listen(0, '127.0.0.1');
 await new Promise(r => server.on('listening', r));
@@ -23,9 +25,11 @@ await p.goto(`http://127.0.0.1:${server.address().port}/${page}`);
 await p.waitForFunction('window.ready === true', null, { timeout: 120000 });
 fs.mkdirSync(outDir, { recursive: true });
 for (const j of jobs) {
+  const t0 = Date.now();
   await p.evaluate(j2 => window.job(j2), j);
   const buf = await p.evaluate(() => document.querySelector('canvas').toDataURL('image/png').split(',')[1]);
+  const ms = Date.now() - t0;
   fs.writeFileSync(`${outDir}/${j.name}.png`, Buffer.from(buf, 'base64'));
-  console.log('shot', j.name);
+  console.log('shot', j.name, ms + ' ms');
 }
 await b.close(); server.close();

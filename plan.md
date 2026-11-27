@@ -153,3 +153,21 @@ Files: `output/dex_sprite_test_5s.mp4` (1080×1920, 30 fps, 5.0 s, voice), `outp
 | Compositing + encoding | **0.067 s per frame** (10 s for 150 frames) | 10 s |
 
 Loudness of the test audio: -19.5 LUFS (a final mix should be raised toward about -14).
+
+## 9. New method after the sprite test was rejected (3D character in a 3D scene, all free tools already installed)
+
+**Why:** sprites are flat pictures. They can't give full-body arms and hands that bend and hold props, a camera that changes angle every 2 seconds, or matching shadows (see `reference-vs-test.md`).
+
+**Pipeline:** Blender builds Dex's approved head and hair and exports it to glTF (`blender/dex_head_export.py`, `assets/dex_head.glb`, rebuilt on demand; not committed because it is 26 MB). three.js loads it onto a rigged 3D body (`render3d/dex4.mjs`) and renders the scene (`render3d/stage_live.html`). Eye, brow and mouth variants are separate named groups that are switched per frame for blinks, expressions and lip-sync. The LIVE badge, viewer count, chat and captions are drawn over each frame (`livestream/overlay.py`). No new install is needed.
+
+**Measured render time (this machine, 1080×1920, 4 CPU cores, no GPU, full livestream scene with Dex, hair, van, props, shadows):** about **3.5 s per frame** in steady state (3.2–3.7 s over 10 frames; first frame about 5.8 s with warm-up).
+
+| 62–70 s episode | Frames | At 3.5 s/frame |
+|---|---|---|
+| 30 fps | 1,860–2,100 | 1.8–2.0 h |
+| 24 fps | 1,488–1,680 | 1.4–1.6 h |
+| 15 fps (every other frame) | 930–1,050 | 0.9–1.0 h |
+
+Real scenes with two or three characters and more set pieces will be slower than this test scene (my estimate: 1.3–2×, not measured). Rendering raw frames instead of PNGs should save about a second per frame (also an estimate). The daily window is about 2 hours, so this fits at 24 fps or with "on twos" animation, not comfortably at 30 fps for busy scenes.
+
+**Build still needed before Episode 1 (estimate, about 8–12 more working sessions like this one):** hands and jacket polish; Gig, Nana Dot and Priya as full 3D characters; the flower stand, noodle cart, Maple Street and the van interior; an animation timeline with camera cuts and lip-sync; then the shot-by-shot animation of Episode 1.

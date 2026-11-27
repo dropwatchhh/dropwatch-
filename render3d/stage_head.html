@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8">
+<style>html,body{margin:0;background:#120a24}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); renderer.setPixelRatio(1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9; renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x3a2a6a);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.5;
+const camera = new THREE.PerspectiveCamera(24, 1, 0.1, 100); scene.add(camera);
+const key = new THREE.DirectionalLight(0xfff0e0, 2.4); key.position.set(-3, 5, 6); camera.add(key); scene.add(key.target);
+const fill = new THREE.PointLight(0xff5fb0, 30, 20); fill.position.set(4, 1, 4); camera.add(fill);
+const rim = new THREE.PointLight(0x40ffe0, 40, 20); rim.position.set(-3, 3, -5); camera.add(rim);
+scene.add(new THREE.HemisphereLight(0xc9c0ff, 0x3a1a30, 0.5));
+let head;
+new GLTFLoader().load('/assets/dex_head.glb', g => { head = g.scene; scene.add(head);
+  head.traverse(o => { if (o.isMesh) { const m = o.material; if (m && m.map) m.map.colorSpace = THREE.SRGBColorSpace; } });
+  window.names = []; head.traverse(o => window.names.push(o.name)); window.ready = true; });
+window.job = ({ w, h, eyes = 'eyes_open', brows = 'brows_up', mouth = 'mouth_smile', deg = 0, dist = 3.2, camY = 2.3, look = 2.3 }) => {
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  head.traverse(o => { if (/^(eyes|brows|mouth)_/.test(o.name) && o.parent === head || /^(eyes|brows|mouth)_/.test(o.name)) o.visible = (o.name === eyes || o.name === brows || o.name === mouth); });
+  const a = deg * Math.PI / 180; camera.position.set(Math.sin(a) * dist, camY, Math.cos(a) * dist); camera.lookAt(0, look, 0); camera.updateMatrixWorld(); renderer.render(scene, camera);
+};
+</script>
