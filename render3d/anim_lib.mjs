@@ -9,9 +9,10 @@ const base = (o = {}) => ({ yaw: 0, spine: [0, 0, 0], head: [0, 0, 0], L: { sh: 
 // ---------------- Dex ----------------
 // run cycle: p = stride phase (radians). amp scales the stride (1 = jog, 1.3 = sprint)
 export function run(p, o = {}) {
-  const amp = o.amp ?? 1, leg = (pp) => ({ hip: [(40 * amp) * Math.sin(pp) + 4, 4], knee: 10 + 62 * amp * Math.pow(Math.max(0, Math.cos(pp)), 1.25) });
-  const arm = (pp, s) => ({ sh: [(50 * amp) * Math.sin(pp + Math.PI) * s + 12, 10], el: 82 + 12 * Math.sin(pp), curl: FIST });
+  const amp = o.amp ?? 1, leg = (pp) => ({ hip: [(46 * amp) * Math.sin(pp) + 6, 2], knee: 12 + 78 * amp * Math.pow(Math.max(0, Math.cos(pp)), 1.15) });
+  const arm = (pp, s) => ({ sh: [(68 * amp) * Math.sin(pp + Math.PI) * s + 14, 6], el: 92 + 22 * Math.sin(pp * s + (s > 0 ? 0 : Math.PI)), curl: FIST });
   const P = base({ yaw: o.yaw ?? 0, spine: [(12 + 7 * (amp - 1) * 3) * (o.lean ?? 1), 5 * Math.sin(p), 0], head: [-9 * (o.lean ?? 1), -3 * Math.sin(p), 0], L: arm(p, 1), R: arm(p, -1), legL: leg(p), legR: leg(p + Math.PI) });
+  P.bob = 0.06 * amp * Math.abs(Math.cos(p)) - 0.02;
   if (o.phone) { P.R = { sh: [98, 14], el: 62 + 5 * Math.sin(p * 2), curl: FIST, phone: true, roll: 20 }; P.head = [-4, 4 * Math.sin(p), 0]; }
   return P;
 }
@@ -38,7 +39,7 @@ export function dive(t) {
     R: mixv({ sh: [60, 14], el: 85, curl: FIST }, { sh: [170, 8], el: 8, curl: [0.4, 0.5, 0.5, 0.5, 0.5] }, launch),
     legL: mixv({ hip: [46, 4], knee: 78 }, { hip: [-20, 6], knee: 38 }, launch), legR: mixv({ hip: [46, 4], knee: 78 }, { hip: [-26, 6], knee: 52 }, launch),
   });
-  P.pitch = 84 * launch; P.rootY = lerp(0.0, 0.18 + 0.9 * Math.sin(Math.PI * launch), launch) + 0.0; if (t < 0.22) { delete P.rootY; P.pitch = 0; }
+  P.pitch = 84 * Math.pow(launch, 0.8); P.rootY = 0.95 * Math.sin(Math.PI * Math.min(1, launch * 1.0)) + 0.2 * launch; if (t < 0.22) { delete P.rootY; P.pitch = 0; }
   return P;
 }
 // dragged belly-down behind the van, both hands on the bumper, legs bouncing, one hand optionally holding the phone selfie-style
@@ -102,8 +103,8 @@ export function vanState(g) {   // g seconds from the turn onto Maple Street: ac
 }
 export function pigeonFlock(THREE, makePigeon, n = 11, seed = 3) {
   const grp = new THREE.Group(); let a = seed; const R = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
-  const birds = []; for (let i = 0; i < n; i++) { const b = makePigeon(); b.scale.setScalar(0.55); grp.add(b); birds.push({ b, x0: (R() - 0.5) * 3.4, z0: (R() - 0.5) * 2.2, t0: R() * 0.35, side: R() - 0.5, up: 1.6 + R() * 1.6, speed: 5 + R() * 3, ph: R() * 6 }); }
-  const update = (tau) => { for (const q of birds) { const u = Math.max(0, tau - q.t0), fly = u > 0; const p = fly ? Math.min(1, u / 1.4) : 0; q.b.position.set(q.x0 + q.side * u * 3.0, 0.12 + q.up * Math.pow(Math.min(u, 1.6), 0.8) * 0.9 + (fly ? 0.0 : 0), q.z0 + q.speed * u * (fly ? 1 : 0)); q.b.rotation.set(fly ? -0.35 : 0, fly ? Math.PI : Math.PI * 0.5 + q.ph, 0);
+  const birds = []; for (let i = 0; i < n; i++) { const b = makePigeon(); b.scale.setScalar(0.55); grp.add(b); birds.push({ b, x0: (R() - 0.5) * 3.6, z0: (R() - 0.5) * 2.4, t0: R() * 0.7, side: (R() - 0.5) * 4.5, up: 1.4 + R() * 2.2, speed: -(3 + R() * 4), ph: R() * 6 }); }
+  const update = (tau) => { for (const q of birds) { const u = Math.max(0, tau - q.t0), fly = u > 0; const p = fly ? Math.min(1, u / 1.4) : 0; q.b.position.set(q.x0 + q.side * u * 3.0, 0.12 + q.up * Math.pow(Math.min(u, 1.6), 0.8) * 0.9 + (fly ? 0.0 : 0), q.z0 + q.speed * u * (fly ? 1 : 0)); q.b.rotation.set(fly ? -0.35 : 0, fly ? 0 : Math.PI * 0.5 + q.ph, 0);
     const flap = fly ? Math.sin(u * 38 + q.ph) * 0.9 : 0.05 * Math.sin(tau * 3 + q.ph); q.b.userData.wings?.forEach((w, k) => { w.rotation.x = (k ? 1 : -1) * (0.15 + flap * (fly ? 1 : 0.2)); }); q.b.visible = true; } };
   return { group: grp, update, birds };
 }
@@ -111,7 +112,7 @@ export function tulipBurst(THREE, n = 46, colors = [0xe8407a, 0xffd23f, 0xff7a3a
   const grp = new THREE.Group(); let a = seed; const R = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
   const mats = colors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 })), stemM = new THREE.MeshStandardMaterial({ color: 0x4f8f3a }), items = [];
   for (let i = 0; i < n; i++) { const t = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 6), stemM); st.position.y = 0.19; const hd = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mats[i % mats.length]); hd.scale.y = 1.35; hd.position.y = 0.4; t.add(st, hd); grp.add(t);
-    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [Math.cos(ang) * sp * 0.7, 3.0 + R() * 3.0, Math.sin(ang) * sp - 1.5], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() - 0.5) * 1.2, 0.5, (R() - 0.5) * 0.5] }); }
+    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.6 + R() * 3.2), 3.4 + R() * 3.4, -(0.6 + R() * 3.0)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (1.25 + R() * 0.5), 0.55, (R() - 0.5) * 0.5] }); }
   const update = (tau) => { for (const q of items) { const u = Math.max(0, tau); q.t.visible = u > 0; q.t.position.set(q.p0[0] + q.v[0] * u, Math.max(0.02, q.p0[1] + q.v[1] * u - 4.9 * u * u), q.p0[2] + q.v[2] * u); q.t.rotation.set(q.spin[0] * u, q.spin[1] * u, q.spin[2] * u); } };
   return { group: grp, update };
 }

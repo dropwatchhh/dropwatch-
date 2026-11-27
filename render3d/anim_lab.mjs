@@ -14,11 +14,11 @@ export function install(E) {
     const face = s.face ?? {};
     switch (s.anim) {
       case 'run': case 'selfie': {
-        const sp = s.speed ?? 4.6, p = A.stridePhase(t, sp) * (s.amp ? 1.0 : 1.0); H.dex.root.position.set(0, 0, sp * t * 0.0); setPose(H.dex, A.run(p, { amp: s.amp ?? 1, phone: s.anim === 'selfie' })); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: 'mouth_shout', ...face }); focus = V(0, 1.0, 0); break; }
+        const sp = s.speed ?? 4.6, p = A.stridePhase(t, sp); setPose(H.dex, A.run(p, { amp: s.amp ?? 1, phone: s.anim === 'selfie', yaw: 180 })); H.dex.root.position.set(0, H.dex.root.position.y, -sp * t); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: 'mouth_shout', ...face }); focus = V(0, 1.0, -sp * t); break; }
       case 'boot': {
-        const sp = 4.6, p = A.stridePhase(t * 1.0, sp); setPose(H.dex, A.bootLoss(clampT(s.k), p)); setBoot(H.dex, 'L', clampT(s.k) < 0.34); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: 'mouth_shout' });
-        H.dex.root.position.set(0, 0, 0); focus = V(0, 1.0, 0);
-        const b = H.boot, k = clampT(s.k); if (k >= 0.34) { const u = (k - 0.34) * (s.dur ?? 1.4); b.visible = true; b.position.set(-0.1 + 0.2 * u, 0.5 + 2.6 * u - 4.9 * u * u * 1.0, 0.4 + 4.2 * u); b.rotation.set(6 * u, 1.2 * u, 3 * u); if (b.position.y < 0.05) b.position.y = 0.05; } else b.visible = false; break; }
+        const sp = 4.6, p = A.stridePhase(t * 1.0, sp); { const P = A.bootLoss(clampT(s.k), p); P.yaw = 180; setPose(H.dex, P); } setBoot(H.dex, 'L', clampT(s.k) < 0.34); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: 'mouth_shout' });
+        const z0 = -sp * t; H.dex.root.position.set(0, H.dex.root.position.y, z0); focus = V(0, 1.0, z0);
+        const b = H.boot, k = clampT(s.k); if (k >= 0.34) { const u = (k - 0.34) * (s.dur ?? 1.4); b.visible = true; b.position.set(-0.1 + 0.2 * u, 0.5 + 2.6 * u - 4.9 * u * u * 1.0, z0 + 0.4 - 4.2 * u); b.rotation.set(6 * u, 1.2 * u, 3 * u); if (b.position.y < 0.05) b.position.y = 0.05; } else b.visible = false; break; }
       case 'dive': {
         H.dex.root.position.set(0, 0, rear + lerp(3.4, 1.9, sm(0.18, 0.68, t))); H.dex.root.rotation.y = Math.PI; setPose(H.dex, A.dive(t)); H.dex.root.rotation.y = Math.PI; setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: 'mouth_shout' }); focus = V(0, 0.7, rear + 1.2); break; }
       case 'drag': {
@@ -44,7 +44,7 @@ export function install(E) {
           if (s.what === 'horn') A.ikPaw(THREE, gig, 'R', w.localToWorld(V(0, 0.02, 0.1 - 0.08 * press)), [60, 10, 80]); else A.ikPaw(THREE, gig, 'R', w.localToWorld(V(0.62 * Math.cos(0.3), 0.62 * Math.sin(0.3), 0)));
           setGigFace(gig, { eyes: 'eyes_wide', mouth: s.what === 'horn' && press > 0.3 ? 'mouth_open' : 'mouth_smile' });
         }
-        const wp = V(0, 0, 0); w.getWorldPosition(wp); focus = wp; break; }
+        const wp = V(0, 0, 0), hp = V(0, 0, 0); w.getWorldPosition(wp); gig.j.head.getWorldPosition(hp); focus = wp.clone().add(hp).multiplyScalar(0.5); break; }
       case 'van': { H.pigeons?.update(s.pigeonT ?? -1); H.tulips?.update(s.tulipT ?? -1); focus = V(0, 1, vz); break; }
     }
     if (s.pigeonT !== undefined) H.pigeons?.update(s.pigeonT); if (s.tulipT !== undefined) H.tulips?.update(s.tulipT);

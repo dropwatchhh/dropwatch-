@@ -313,7 +313,7 @@ export function setPose(rig, spec) {
     l.ank.rotation.set(a - kn, 0, -s * q.hip[1] * D); // keep soles flat
     hmax = Math.max(hmax, rig.L1 * Math.cos(a) * Math.cos(q.hip[1] * D) + rig.L2 * Math.cos(a - kn) * Math.cos(q.hip[1] * D));
   }
-  rig.root.position.y = p.rootY ?? (hmax - (rig.L1 + rig.L2)); rig.root.rotation.x = (p.pitch ?? 0) * D; rig.root.rotation.z = (p.roll ?? 0) * D;
+  rig.root.position.y = (p.rootY ?? (hmax - (rig.L1 + rig.L2))) + (p.bob ?? 0); rig.root.rotation.x = (p.pitch ?? 0) * D; rig.root.rotation.z = (p.roll ?? 0) * D;
 }
 
 export const buildDex = () => buildPerson({});
