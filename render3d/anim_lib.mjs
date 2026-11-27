@@ -9,15 +9,15 @@ const base = (o = {}) => ({ yaw: 0, spine: [0, 0, 0], head: [0, 0, 0], L: { sh: 
 // ---------------- Dex ----------------
 // run cycle: p = stride phase (radians). amp scales the stride (1 = jog, 1.3 = sprint)
 export function run(p, o = {}) {
-  const amp = o.amp ?? 1, leg = (pp) => ({ hip: [(46 * amp) * Math.sin(pp) + 6, 2], knee: 12 + 78 * amp * Math.pow(Math.max(0, Math.cos(pp)), 1.15) });
+  const amp = o.amp ?? 1, leg = (pp) => ({ hip: [(36 * amp) * Math.sin(pp) + 8, 2], knee: 16 + 70 * amp * Math.pow(Math.max(0, Math.cos(pp - 0.35)), 1.2) });
   const arm = (pp, s) => ({ sh: [(68 * amp) * Math.sin(pp + Math.PI) * s + 14, 6], el: 92 + 22 * Math.sin(pp * s + (s > 0 ? 0 : Math.PI)), curl: FIST });
   const P = base({ yaw: o.yaw ?? 0, spine: [(12 + 7 * (amp - 1) * 3) * (o.lean ?? 1), 5 * Math.sin(p), 0], head: [-9 * (o.lean ?? 1), -3 * Math.sin(p), 0], L: arm(p, 1), R: arm(p, -1), legL: leg(p), legR: leg(p + Math.PI) });
-  P.bob = 0.06 * amp * Math.abs(Math.cos(p)) - 0.02;
+  P.bob = 0;
   if (o.phone) { P.R = { sh: [98, 14], el: 62 + 5 * Math.sin(p * 2), curl: FIST, phone: true, roll: 20 }; P.head = [-4, 4 * Math.sin(p), 0]; }
   return P;
 }
 // stride phase for a given time and speed in m/s (stride length about 1.5 m for Dex)
-export const stridePhase = (t, speed = 4.5) => 2 * Math.PI * (speed / 1.5) * t * 0.5;
+export const stridePhase = (t, speed = 4.2) => 2 * Math.PI * t * speed / 2.33;
 // the left boot flies off: quick kick, then hopping on one sock foot with arms flailing. t in 0..1
 export function bootLoss(t, p) {
   const kick = sm(0.18, 0.34, t) * (1 - sm(0.34, 0.5, t)), hop = sm(0.5, 0.62, t);
@@ -31,7 +31,7 @@ export function bootLoss(t, p) {
   return P;
 }
 // dive for the bumper then hang/drag. t: 0 crouch, .25 launch, .6 grab, 1 dragged. rootY and pitch included
-export function dive(t) {
+export function diveOld(t) {
   const crouch = sm(0, 0.22, t), launch = sm(0.22, 0.6, t);
   const P = base({
     yaw: 180, spine: [lerp(14, 4, launch) + 18 * crouch * (1 - launch), 0, 0], head: [-14 * launch, 0, 0],
@@ -47,7 +47,7 @@ export function drag(g, o = {}) {
   const P = base({ yaw: 180, spine: [0, 0, 0], head: [-34, 4 * Math.sin(g * 9), 0],
     L: { sh: [172, 6], el: 6, curl: [0.5, 0.9, 0.9, 0.9, 0.9] }, R: o.selfie ? { sh: [150, 30], el: 70, curl: FIST, phone: true, roll: 10 } : { sh: [172, -6], el: 6, curl: [0.5, 0.9, 0.9, 0.9, 0.9] },
     legL: { hip: [-10 + 14 * Math.sin(g * 11), 6], knee: 30 + 24 * Math.max(0, Math.sin(g * 11)) }, legR: { hip: [-10 + 14 * Math.sin(g * 11 + 2), 6], knee: 30 + 24 * Math.max(0, Math.sin(g * 11 + 2)) } });
-  P.pitch = 84; P.rootY = 0.2 + 0.03 * Math.abs(Math.sin(g * 11)); return P;
+  P.pitch = 79; return P;
 }
 // hanging on to the side of the van while it speeds up: body leaning back, feet scuffing
 export function hang(g) {
@@ -91,9 +91,11 @@ export function nanaBrace(t, g) {   // goalkeeper: wide stance, knees bent, arms
   return base({ yaw: sw, spine: [-6 * k, 0, 0], head: [-4 * k, 0, 0], L: { sh: [lerp(8, 30, k), lerp(10, 78, k)], el: lerp(14, 30, k), curl: lerp(0.5, 0.1, k) ? OPEN : OPEN }, R: { sh: [lerp(8, 30, k), lerp(10, 78, k)], el: lerp(14, 30, k), curl: OPEN }, legL: { hip: [6 * k, 20 * k], knee: 22 * k }, legR: { hip: [6 * k, 20 * k], knee: 22 * k } });
 }
 export const nanaWave = (t, g) => base({ spine: [2, 0, 4], head: [0, 0, 4], R: { sh: [168, 28], el: 22 + 24 * Math.sin(g * 18), curl: OPEN }, L: { sh: [12, 12], el: 20, curl: RELAX } });
-export function nanaDuck(t) {
-  const k = sm(0, 0.4, t);
-  return base({ spine: [40 * k, 0, 0], head: [22 * k, 0, 0], L: { sh: [150 * k + 6, 20], el: 110 * k + 14, curl: FIST }, R: { sh: [150 * k + 4, 20], el: 110 * k + 18, curl: FIST }, legL: { hip: [50 * k, 8], knee: 82 * k }, legR: { hip: [50 * k, 8], knee: 82 * k } });
+export function nanaDuck(t, g = 0) {   // crouching dodge: knees deeply bent, back rounded a little, arms up over her head, head tucked, flinch shake
+  const k = sm(0, 0.3, t), sh = 1.5 * Math.sin(g * 26) * k;
+  return base({ yaw: sh, spine: [22 * k, 0, 4 * k], head: [26 * k, 0, 0], roll: 0,
+    L: { sh: [lerp(8, 150, k), lerp(10, 22, k)], el: lerp(14, 128, k), curl: FIST }, R: { sh: [lerp(8, 150, k), lerp(10, 22, k)], el: lerp(14, 128, k), curl: FIST },
+    legL: { hip: [78 * k, 12 * k], knee: 122 * k }, legR: { hip: [78 * k, 12 * k], knee: 122 * k } });
 }
 
 // ---------------- van, pigeons, tulips ----------------
@@ -101,11 +103,14 @@ export function vanState(g) {   // g seconds from the turn onto Maple Street: ac
   const v = 4 + 3.2 * g + 0.25 * g * g, z = -(4 * g + 1.6 * g * g + 0.0417 * g ** 3);
   return { v, z, y: 0.015 * Math.sin(g * 17) + 0.01 * Math.sin(g * 29), yaw: 0.02 * Math.sin(g * 2.2), pitch: -0.012 + 0.006 * Math.sin(g * 13), wheel: -(-z) / 0.34 };
 }
-export function pigeonFlock(THREE, makePigeon, n = 11, seed = 3) {
+export function pigeonFlock(THREE, makePigeon, n = 12, seed = 3) {
   const grp = new THREE.Group(); let a = seed; const R = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
-  const birds = []; for (let i = 0; i < n; i++) { const b = makePigeon(); b.scale.setScalar(0.55); grp.add(b); birds.push({ b, x0: (R() - 0.5) * 3.6, z0: (R() - 0.5) * 2.4, t0: R() * 0.7, side: (R() - 0.5) * 4.5, up: 1.4 + R() * 2.2, speed: -(3 + R() * 4), ph: R() * 6 }); }
-  const update = (tau) => { for (const q of birds) { const u = Math.max(0, tau - q.t0), fly = u > 0; const p = fly ? Math.min(1, u / 1.4) : 0; q.b.position.set(q.x0 + q.side * u * 3.0, 0.12 + q.up * Math.pow(Math.min(u, 1.6), 0.8) * 0.9 + (fly ? 0.0 : 0), q.z0 + q.speed * u * (fly ? 1 : 0)); q.b.rotation.set(fly ? -0.35 : 0, fly ? 0 : Math.PI * 0.5 + q.ph, 0);
-    const flap = fly ? Math.sin(u * 38 + q.ph) * 0.9 : 0.05 * Math.sin(tau * 3 + q.ph); q.b.userData.wings?.forEach((w, k) => { w.rotation.x = (k ? 1 : -1) * (0.15 + flap * (fly ? 1 : 0.2)); }); q.b.visible = true; } };
+  const birds = []; for (let i = 0; i < n; i++) { const b = makePigeon(); b.scale.setScalar(0.55); grp.add(b); const dir = (i / n - 0.5) * 2.0 + (R() - 0.5) * 0.3;   // -1..1 fan from left to right
+    birds.push({ b, x0: (i / (n - 1) - 0.5) * 7 + (R() - 0.5) * 0.7, z0: (R() - 0.5) * 6, t0: R() * 0.9, vx: dir * (3.2 + R() * 2.8), vz: -(2.5 + R() * 4.5), up: 2.2 + R() * 2.8, ph: R() * 6 }); }
+  const update = (tau) => { for (const q of birds) { const u = Math.max(0, tau - q.t0), fly = u > 0;
+    q.b.position.set(q.x0 + q.vx * u, 0.12 + (fly ? q.up * (1 - Math.exp(-2.4 * u)) : 0), q.z0 + (fly ? q.vz * u : 0));
+    q.b.rotation.set(fly ? -0.3 : 0, fly ? Math.atan2(q.vx, q.vz) + Math.PI : Math.PI * 0.5 + q.ph, 0);
+    const flap = fly ? Math.sin(u * 36 + q.ph) * 0.95 : 0.05 * Math.sin(tau * 3 + q.ph); q.b.userData.wings?.forEach((w, k) => { w.rotation.x = (k ? 1 : -1) * (0.15 + flap * (fly ? 1 : 0.2)); }); q.b.visible = true; } };
   return { group: grp, update, birds };
 }
 export function tulipBurst(THREE, n = 46, colors = [0xe8407a, 0xffd23f, 0xff7a3a, 0xb06cff], seed = 5) {
@@ -115,4 +120,17 @@ export function tulipBurst(THREE, n = 46, colors = [0xe8407a, 0xffd23f, 0xff7a3a
     const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.6 + R() * 3.2), 3.4 + R() * 3.4, -(0.6 + R() * 3.0)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (1.25 + R() * 0.5), 0.55, (R() - 0.5) * 0.5] }); }
   const update = (tau) => { for (const q of items) { const u = Math.max(0, tau); q.t.visible = u > 0; q.t.position.set(q.p0[0] + q.v[0] * u, Math.max(0.02, q.p0[1] + q.v[1] * u - 4.9 * u * u), q.p0[2] + q.v[2] * u); q.t.rotation.set(q.spin[0] * u, q.spin[1] * u, q.spin[2] * u); } };
   return { group: grp, update };
+}
+
+// bumper dive in one continuous move. u: 0 run, .25 plant, .35 launch, .78 hands on the bumper, 1 dragged
+export function dive(u) {
+  const run = 1 - sm(0.2, 0.3, u), crouch = sm(0.2, 0.3, u) * (1 - sm(0.34, 0.4, u)), air = sm(0.34, 0.78, u);
+  const P = base({ yaw: 180,
+    spine: [lerp(12, 4, air) + 18 * crouch, 0, 0], head: [-10 - 8 * air, 0, 0],
+    L: mixv({ sh: [60, 12], el: 88, curl: FIST }, { sh: [172, 6], el: 6, curl: [0.5, 0.9, 0.9, 0.9, 0.9] }, sm(0.34, 0.74, u)),
+    R: mixv({ sh: [60, 12], el: 88, curl: FIST }, { sh: [172, -6], el: 6, curl: [0.5, 0.9, 0.9, 0.9, 0.9] }, sm(0.34, 0.74, u)),
+    legL: mixv({ hip: [38, 2], knee: 70 }, { hip: [-18, 6], knee: 34 }, air), legR: mixv({ hip: [44, 2], knee: 82 }, { hip: [-26, 6], knee: 52 }, air) });
+  P.legL = mixv(P.legL, { hip: [48, 4], knee: 84 }, crouch); P.legR = mixv(P.legR, { hip: [48, 4], knee: 84 }, crouch);
+  P.pitch = 79 * Math.pow(sm(0.34, 0.8, u), 0.9);
+  return P;
 }
