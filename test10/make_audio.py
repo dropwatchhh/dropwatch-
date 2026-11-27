@@ -31,15 +31,15 @@ mus*=np.minimum(1,t/0.05)*np.minimum(1,(D-t)/0.4)
 sfx=np.zeros(N)
 def ping(at,f1=1318,f2=1760):
     n=int(SR*0.35); x=np.arange(n)/SR; put(sfx,0.35*np.sin(2*np.pi*f1*x)*env(n,0.001,0.09),at); put(sfx,0.3*np.sin(2*np.pi*f2*x)*env(n,0.001,0.12),at+0.09)
-ping(2.88)
-n=int(SR*0.35); sw=rng.standard_normal(n); sw=sw-lp(sw,30); put(sfx,0.18*sw*np.sin(np.pi*np.arange(n)/n),2.78)   # banner swish
+ping(2.56)
+n=int(SR*0.35); sw=rng.standard_normal(n); sw=sw-lp(sw,30); put(sfx,0.18*sw*np.sin(np.pi*np.arange(n)/n),2.46)   # banner swish
 # engine putter: rough low pulses, louder as the van passes the camera (6.6-8.2 s)
 eng=np.sin(2*np.pi*np.cumsum(38+4*np.sin(2*np.pi*3*t))/SR)+0.6*saw(19,N)
 eng=lp(eng,12)*(0.55+0.45*np.sign(np.sin(2*np.pi*11*t)))*0.5
-lvl=0.25+0.75*np.exp(-((t-7.4)/1.4)**2); sfx+=0.55*eng*lvl*np.minimum(1,t/0.2)
+lvl=0.25+0.75*np.exp(-((t-5.4)/1.4)**2); sfx+=0.55*eng*lvl*np.minimum(1,t/0.2)
 # gig chitter 8.3-9.3: quick rising chirps
 for k in range(7):
-    at=8.35+k*0.14; n=int(SR*0.09); x=np.arange(n)/SR; f=2600+1500*x/0.09*(1 if k%2 else -1)+300*k
+    at=8.3+k*0.14; n=int(SR*0.09); x=np.arange(n)/SR; f=2600+1500*x/0.09*(1 if k%2 else -1)+300*k
     put(sfx,0.22*np.sin(2*np.pi*np.cumsum(f)/SR)*np.sin(np.pi*x/0.09),at)
 put(sfx,0.0*sfx[:10],0)
 # ---- voice: designed Dex voice (already edited to timeline), light cleanup via ffmpeg

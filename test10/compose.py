@@ -3,11 +3,11 @@ import sys, os, subprocess
 from PIL import Image, ImageDraw, ImageFont
 F=lambda w,s: ImageFont.truetype(f"/usr/share/fonts/opentype/inter/Inter-{w}.otf", s)
 FR='frames'; OUT='ov'; os.makedirs(OUT,exist_ok=True)
-LOT={'S1','S2','S3','S4','S6'}
-CHAT=[(1.6,"mia.moon",(255,150,200),"he said ANYTHING lol"),(3.3,"bigmaple44",(255,210,90),"wait what is behind him"),(6.9,"noodle_nate",(255,170,110),"DEX BEHIND U")]
+LOT={'S1','S2','S3','S4','S6','S7'}
+CHAT=[(1.5,"mia.moon",(255,150,200),"he said ANYTHING lol"),(3.1,"bigmaple44",(255,210,90),"wait what is behind him"),(4.8,"noodle_nate",(255,170,110),"DEX BEHIND U"),(7.3,"mia.moon",(255,150,200),"THE VAN")]
 def pill(d,b,fill): d.rounded_rectangle(b,radius=(b[3]-b[1])//2,fill=fill)
 def shot_of(g):
-    for s,a,b in [('S1',0,2.8),('S2',2.8,4.3),('S3',4.3,6.6),('S4',6.6,8.2),('S5',8.2,9.3),('S6',9.3,10.1)]:
+    for s,a,b in [('S1',0,2.5),('S2',2.5,3.5),('S3',3.5,4.64),('S4',4.64,6.3),('S7',6.3,8.2),('S5',8.2,9.25),('S6',9.25,10.1)]:
         if a<=g<b: return s
 def draw(im,g):
     W,H=im.size; ov=Image.new('RGBA',im.size,(0,0,0,0)); d=ImageDraw.Draw(ov); s=shot_of(g)
@@ -22,13 +22,14 @@ def draw(im,g):
             pill(d,(cx+off,cy,cx+w+off,cy+62),(16,12,26,int(a*0.72*pop))); d.ellipse((cx+10+off,cy+10,cx+52+off,cy+52),fill=col+(int(a*pop),))
             d.text((cx+22+off,cy+13),u[0].upper(),font=fn,fill=(20,12,30,int(a*pop))); d.text((cx+64+off,cy+15),u+"  ",font=fn,fill=col+(int(a*pop),)); d.text((cx+64+off+d.textlength(u+"  ",font=fn),cy+15),m,font=fm,fill=(255,255,255,int(a*pop))); cy+=74
     # pinned message from Lena (the stakes) 2.85-4.9, slides up from below
-    if 2.85<=g<4.9:
-        k=min(1,(g-2.85)/0.2); k=1-(1-k)**3; fade=min(1,(4.9-g)/0.25); y0=int(1330+(1-k)*120); a=int(255*fade)
+    if 2.55<=g<4.5:
+        k=min(1,(g-2.55)/0.2); k=1-(1-k)**3; fade=min(1,(4.5-g)/0.25); y0=int(1330+(1-k)*120); a=int(255*fade)
         d.rounded_rectangle((60,y0,1020,y0+230),radius=34,fill=(18,14,32,int(235*fade)),outline=(255,63,176,a),width=5)
         d.ellipse((92,y0+24,132,y0+64),fill=(255,63,176,a)); d.text((150,y0+22),"PINNED  ·  LENA CHO",font=F("Bold",30),fill=(255,150,215,a))
         d.text((92,y0+82),"HEADLINE SHOW IN 30 DAYS.",font=F("ExtraBold",46),fill=(255,255,255,a)); d.text((92,y0+142),"NO GUITAR = NO HEADLINE SHOW",font=F("ExtraBold",46),fill=(255,214,70,a))
     cap=None
-    if 1.35<=g<2.7: cap=("ANYTHING",1.35)
+    if 1.7<=g<2.55: cap=("ANYTHING",1.7)
+    elif 7.0<=g<8.0: cap=("MY VAN?!",7.0)
     elif 8.3<=g<9.25: cap=("GIG IS DRIVING",8.3)
     if cap:
         txt,t0=cap; pop=min(1,(g-t0)/0.12); sc=0.8+0.2*(1-(1-pop)**2); size=150
