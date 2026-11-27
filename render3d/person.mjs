@@ -114,16 +114,18 @@ export function buildPerson(opts = {}) {
   const all = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
 
   // legs
-  const L1 = 0.4, L2 = 0.5, HIPY = 1.12;
-  const hips = pivot(root, 0, 0, 0);
+  // adult proportions: small head (HS), long legs, tall torso (YS), long arms (UA/FA)
+  const HS = opts.headScale ?? 0.5, YS = opts.torsoStretch ?? 1.85, XS = 1.12, UA = 0.68, FA = 0.58;
+  const L1 = 0.9, L2 = 0.85, HIPY = 2.0, WAIST = HIPY + 0.05;
+  const hips = pivot(root, 0, HIPY - 1.12, 0);
   hips.add(ell(M.jeans, 0.43, 0.22, 0.29, 0, 1.12, 0), rbox(M.black, 0.8, 0.1, 0.58, 0, 1.1, 0, 0.03), rbox(M.metal, 0.13, 0.1, 0.04, 0, 1.1, 0.3, 0.012));
   if (PUNK) hips.add(tube(M.metal, [[0.3, 1.1, 0.26], [0.42, 0.98, 0.26], [0.4, 0.86, 0.2], [0.31, 0.8, 0.16]], 0.011));
   for (const s of [-1, 1]) {
     const hip = pivot(root, s * 0.2, HIPY, 0);
-    hip.add(ell(M.jeans, 0.165, 0.165, 0.165, 0, 0, 0));
-    const th = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.145, L1, 28), M.jeans); th.position.y = -L1 / 2; hip.add(th);
-    const knee = pivot(hip, 0, -L1, 0); knee.add(ell(M.jeans, 0.145, 0.145, 0.145, 0, 0, 0));
-    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.13, L2, 28), M.jeans); shin.position.y = -L2 / 2; knee.add(shin);
+    hip.add(ell(M.jeans, 0.21, 0.21, 0.21, 0, 0, 0));
+    const th = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.145, L1, 28), M.jeans); th.position.y = -L1 / 2; th.scale.set(1.3, 1, 1.3); hip.add(th);
+    const knee = pivot(hip, 0, -L1, 0); knee.add(ell(M.jeans, 0.175, 0.175, 0.175, 0, 0, 0));
+    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.13, L2, 28), M.jeans); shin.position.y = -L2 / 2; shin.scale.set(1.2, 1, 1.2); knee.add(shin);
     // rips (move with the limb)
     const rip = (par, x, y, rx, ry, rot) => { const r = ell(M.skinD, rx, ry, 0.03, x, y, 0.138, 24); r.rotation.z = rot; par.add(r);
       for (let i = -1; i <= 1; i++) { const t = rbox(M.white, 0.013, ry * 1.6, 0.013, x + i * rx * 0.45, y, 0.162, 0.005); t.rotation.z = rot; par.add(t); } };
@@ -139,7 +141,7 @@ export function buildPerson(opts = {}) {
   }
 
   // ---------- chest (spine pivot at the waist)
-  const chest = pivot(root, 0, 1.15, 0); const ci = pivot(chest, 0, -1.15, 0); rig.j.chest = chest;
+  const chest = pivot(root, 0, WAIST, 0); const ci = pivot(chest, 0, -1.15 * YS, 0); ci.scale.set(XS, YS, XS); rig.j.chest = chest;
   // tee body
   const teeProf = [[0.43, 0], [0.43, 0.2], [0.4, 0.42], [0.36, 0.62], [0.27, 0.74], [0.17, 0.8]].map(([r, y]) => new THREE.Vector2(r * 0.93, y));
   const tee = new THREE.Mesh(new THREE.LatheGeometry(teeProf, 40), M.tee); tee.geometry.scale(1, 1, 0.72); tee.position.y = 1.04; ci.add(tee);
@@ -173,15 +175,15 @@ export function buildPerson(opts = {}) {
   // ---------- arms
   const arms = {};
   for (const s of [-1, 1]) {
-    const sh = pivot(ci, s * 0.4, 1.68, 0.0);
-    sh.add(ell(M.leatherS, 0.12, 0.12, 0.12, 0, 0, 0, 28));
-    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.108, 0.32, 28, 4), M.leatherS); up.position.y = -0.16; sh.add(up);
-    const el = pivot(sh, 0, -0.32, 0); el.add(ell(M.leatherS, 0.108, 0.108, 0.108, 0, 0, 0, 28));
-    const fo = new THREE.Mesh(new THREE.CylinderGeometry(0.108, 0.097, 0.32, 28, 4), M.leatherS); fo.position.y = -0.16; el.add(fo);
+    const sh = pivot(chest, s * 0.4 * XS, (1.68 - 1.15) * YS, 0.0);
+    sh.add(ell(M.leatherS, 0.15, 0.15, 0.15, 0, 0, 0, 28));
+    const up = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.108, UA, 28, 4), M.leatherS); up.position.y = -UA / 2; up.scale.set(1.25, 1, 1.25); sh.add(up);
+    const el = pivot(sh, 0, -UA, 0); el.add(ell(M.leatherS, 0.134, 0.134, 0.134, 0, 0, 0, 28));
+    const fo = new THREE.Mesh(new THREE.CylinderGeometry(0.108, 0.097, FA, 28, 4), M.leatherS); fo.position.y = -FA / 2; fo.scale.set(1.25, 1, 1.25); el.add(fo);
     for (const [yy, rr] of [[0.07, 0.112], [0.035, 0.115], [-0.04, 0.104], [-0.075, 0.1]]) { const t = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.012, 8, 28), M.leatherD); t.rotation.x = Math.PI / 2; t.position.y = yy; t.scale.set(1, 1, 0.8); el.add(t); }   // elbow folds
     for (const yy of [-0.05, -0.1]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.01, 8, 28), M.leatherD); t.rotation.x = Math.PI / 2; t.position.y = yy; sh.add(t); }   // shoulder folds
     if (PUNK) { const epa = rbox(M.leatherD, 0.2, 0.05, 0.16, 0, 0.1, 0, 0.02); epa.rotation.z = s * 0.35; sh.add(epa); for (let k = 0; k < 2; k++) sh.add(ell(M.metal, 0.018, 0.018, 0.018, s * (0.02 + k * 0.05), 0.14 - k * 0.012, 0.0, 12)); }
-    const wr = pivot(el, 0, -0.32, 0);
+    const wr = pivot(el, 0, -FA, 0);
     wr.add(new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.123, 0.09, 24), M.leatherD)); wr.children[0].position.y = 0.04;
     if (s > 0) { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.028, 10, 24), M.wrist); bd.rotation.x = Math.PI / 2; bd.position.y = -0.03; wr.add(bd); }
     // hand: big rounded palm, 4 two-joint fingers with knuckle spheres, 2-joint thumb; optional hand-held mic prop
@@ -227,7 +229,7 @@ export function buildPerson(opts = {}) {
   }
 
   // ---------- neck + head (pivot at the neck base)
-  const neckP = pivot(ci, 0, 1.88, 0.02); const hi = pivot(neckP, 0, -1.88, -0.02); rig.j.neck = neckP;
+  const neckP = pivot(chest, 0, (1.88 - 1.15) * YS, 0.02); const hi = pivot(neckP, 0, -1.88 * HS, -0.02 * HS); hi.scale.setScalar(HS); rig.j.neck = neckP;
   ci.add(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.22, 24), M.skinD)); ci.children[ci.children.length - 1].position.set(0, 1.9, 0.02);
   rig.headInner = hi;
   rig.attachHead = (scene3d) => { hi.add(scene3d); rig.headRoot = scene3d; };
@@ -286,7 +288,7 @@ export function setPose(rig, spec) {
     l.ank.rotation.set(a - kn, 0, -s * q.hip[1] * D); // keep soles flat
     hmax = Math.max(hmax, rig.L1 * Math.cos(a) * Math.cos(q.hip[1] * D) + rig.L2 * Math.cos(a - kn) * Math.cos(q.hip[1] * D));
   }
-  rig.root.position.y = hmax - 0.9;
+  rig.root.position.y = hmax - (rig.L1 + rig.L2);
 }
 
 export const buildDex = () => buildPerson({});
