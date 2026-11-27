@@ -39,7 +39,7 @@ m_skin = simple('skin', (0.46, 0.21, 0.11, 1), 0.5); m_skinD = simple('skinD', (
 m_lipU = simple('lipU', (0.42, 0.10, 0.14, 1), 0.32); m_lipL = simple('lipL', (0.52, 0.14, 0.18, 1), 0.28)
 m_mouth = simple('mouthIn', (0.07, 0.01, 0.02, 1), 0.7); m_teeth = simple('teeth', (0.9, 0.86, 0.8, 1), 0.25); m_tongue = simple('tongue', (0.5, 0.1, 0.14, 1), 0.5)
 m_black = simple('black', (0.01, 0.008, 0.012, 1), 0.45); m_metal = simple('metal', (0.8, 0.82, 0.86, 1), 0.2, 1.0); m_white = simple('white', (0.9, 0.9, 0.88, 1), 0.5)
-m_under = simple('undercut', (0.004, 0.004, 0.007, 1), 0.22); m_teal = simple('hairT', (0.1, 0.5, 0.5, 1), 0.35); m_pink = simple('hairP', (0.6, 0.1, 0.3, 1), 0.35)
+m_under = simple('undercut', (0.006, 0.006, 0.008, 1), 0.5); m_teal = simple('hairT', (0.1, 0.5, 0.5, 1), 0.35); m_pink = simple('hairP', (0.6, 0.1, 0.3, 1), 0.35)
 m_brow = simple('brow', (0.003, 0.003, 0.005, 1), 0.3); m_lash = simple('lash', (0.005, 0.004, 0.006, 1), 0.4)
 # eye texture: front-facing planar iris/pupil/sclera, so it exports as a normal image texture
 def iris_image():
@@ -307,19 +307,19 @@ def scalp_sample(extra=0.0):
 # ---- glossy black rockstar gel spikes: 20-30 separate rigid wedge-shaped clumps, wide base, one sharp tip, pointing up and outward
 STYLE = argv[1] if len(argv) > 1 else 'A'
 CFG = {
-    'A': dict(n=26, dist=0.30, Lmin=0.42, Lmax=0.62, up=1.0, out=0.95, back=0.0, flat=0.55, Rb=(0.23, 0.28), bend=0.05, tall_top=0.16, alt=False, taper=0.88),
-    'B': dict(n=24, dist=0.31, Lmin=0.40, Lmax=0.80, up=1.0, out=0.40, back=0.8, flat=0.42, Rb=(0.23, 0.29), bend=0.16, tall_top=0.30, alt=False, taper=0.78),
-    'C': dict(n=28, dist=0.28, Lmin=0.34, Lmax=0.78, up=0.75, out=1.3, back=0.0, flat=0.62, Rb=(0.24, 0.30), bend=0.08, tall_top=0.24, alt=True, taper=0.72),
+    'A': dict(n=26, dist=0.30, Lmin=0.42, Lmax=0.62, up=1.0, out=0.95, back=0.0, flat=0.55, Rb=(0.23, 0.28), bend=0.05, tall_top=0.16, alt=False, taper=0.88, ridge=0.03, sway=0.0),
+    'B': dict(n=24, dist=0.31, Lmin=0.40, Lmax=0.80, up=1.0, out=0.40, back=0.8, flat=0.42, Rb=(0.23, 0.29), bend=0.16, tall_top=0.30, alt=False, taper=0.78, ridge=0.03, sway=0.0),
+    'C': dict(n=26, dist=0.245, Lmin=0.34, Lmax=0.76, up=0.75, out=1.3, back=0.0, flat=0.62, Rb=(0.13, 0.155), bend=0.07, tall_top=0.22, alt=True, taper=0.85, ridge=0.075, sway=0.05),
 }[STYLE]
 spikes = []
 tries = 0
-def front_ok(a_, y): return abs(a_) > 1.2 or y > hairline_y(a_) + 0.34
+def front_ok(a_, y): return abs(a_) > 1.1 or y > hairline_y(a_) + 0.30
 while len(spikes) < CFG['n'] and tries < 80000:
     tries += 1; a_, y = scalp_sample(0.06); p, n = head_pt(a_, y)
     if not front_ok(a_, y): continue
     if all((p - q[0]).length > CFG['dist'] for q in spikes): spikes.append((p, n, a_, y))
 spike_objs = []
-HAIRCOL_S = {'a': ((0.006, 0.006, 0.011), (0.035, 0.038, 0.055)), 'b': ((0.006, 0.006, 0.011), (0.03, 0.034, 0.05))}
+HAIRCOL_S = {'a': ((0.012, 0.012, 0.014), (0.11, 0.11, 0.12)), 'b': ((0.012, 0.012, 0.014), (0.11, 0.11, 0.12))}
 def sgn(x): return -1.0 if x < 0 else 1.0
 def build_wedge(si, p, n):
     topness = max(0.0, n.y); nf = V3(n.x, n.y, min(n.z, 0.1) if n.y < 0.8 else n.z * 0.5)
@@ -335,11 +335,11 @@ def build_wedge(si, p, n):
     bm2 = bmesh.new(); rings = []; thetas = {}
     for ti in range(NT + 1):
         t = ti / NT; c = p - d * 0.08 + d * (L * t + 0.08) + bend * (t * t)
-        rw = Rb * (1 - t) ** CFG['taper'] * (1 + 0.4 * math.exp(-t * 7.0)); rd = rw * CFG['flat'] * (1 - 0.15 * t); ring = []
+        rw = Rb * (1 - t ** 2.6) ** CFG['taper'] * (1 + 0.4 * math.exp(-t * 7.0)); rd = rw * CFG['flat'] * (1 - 0.15 * t); ring = []
         for k in range(K):
             th = 6.2832 * k / K; cs, sn = math.cos(th), math.sin(th)
-            m = 1 + (0.03 * math.sin(26 * th + 2 * t) + 0.02 * math.sin(43 * th - 3 * t)) * (1 - t ** 2)
-            pos = c + wax * (sgn(cs) * abs(cs) ** 0.85) * rw * m + dep * (sgn(sn) * abs(sn) ** 0.85) * rd * m
+            m = 1 + (CFG['ridge'] * math.sin(20 * th + 2 * t) + CFG['ridge'] * 0.6 * math.sin(35 * th - 3 * t)) * (1 - t ** 2)
+            pos = c + wax * (sgn(cs) * abs(cs) ** 0.62) * rw * m + dep * (sgn(sn) * abs(sn) ** 0.62) * rd * m + wax * (CFG['sway'] * L * math.sin(t * 3.1416) * (1 if si % 2 else -1))
             thetas[(ti, k)] = th; ring.append(bm2.verts.new(P(*pos)))
         rings.append(ring)
     tipv = bm2.verts.new(P(*(p - d * 0.08 + d * (L + 0.08) + bend)))
@@ -351,17 +351,18 @@ def build_wedge(si, p, n):
     for i, vv in enumerate(me.vertices):
         if i < (NT + 1) * K: ti, k = divmod(i, K); th = thetas[(ti, k)]
         else: ti, k, th = NT, 0, 0.0
-        t = ti / NT; streak = 0.6 + 0.8 * (math.sin(52 * th + si) * 0.5 + 0.5) ** 2
+        t = ti / NT; streak = 0.38 + 1.1 * (math.sin(40 * th + si) * 0.5 + 0.5) ** 2
         ca.data[i].color = (lerp(bs[0], tp[0], t) * streak, lerp(bs[1], tp[1], t) * streak, lerp(bs[2], tp[2], t) * streak, 1.0)
     for pl in me.polygons: pl.use_smooth = True
     ob = bpy.data.objects.new('wedge%d' % si, me); scene.collection.objects.link(ob); return ob
 for si, (p, n, a_, y) in enumerate(spikes): spike_objs.append(build_wedge(si, p, n))
-for _ in range(0):  # no short under-layer strands: the glossy black scalp shell is the hair mass
-   
-    a_, y = scalp_sample(0.0); p, n = head_pt(a_, y); l = HR.uniform(0.06, 0.14)
-    dd = (n + V3(0, 0.45, 0) + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.3).normalized()
-    pts = [tuple(p - n * 0.03), tuple(p + dd * l * 0.5), tuple(p + dd * l + V3(0, -0.01, 0))]
-    under[kind_at(p)].append((pts, [1.0, 0.75, 0.15]))
+print('SPIKES', len(spikes))
+for _ in range(9000):  # short STRAIGHT hair: all strands combed the same way (up and away from the crown), no curl
+    a_, y = scalp_sample(0.0); p, n = head_pt(a_, y); l = HR.uniform(0.07, 0.11)
+    g_ = p - V3(0, 2.62, 0); tg = (g_ - n * g_.dot(n)); tg = tg.normalized() if tg.length > 1e-4 else V3(0, 0, 0)
+    dd = (n * 0.35 + V3(0, 0.55, 0) + tg * 0.35 + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.04).normalized()
+    pts = [tuple(p - n * 0.02), tuple(p + dd * l * 0.5), tuple(p + dd * l)]
+    under[kind_at(p)].append((pts, [1.0, 0.8, 0.12]))
 for _ in range(0):  # (removed: no feathered hairs) baby hairs along the hairline, densest right at the edge, lying nearly flat
     a_ = HR.uniform(-math.pi * 0.97, math.pi * 0.97); dist = HR.expovariate(1 / 0.03)
     if dist > 0.12: continue
@@ -375,7 +376,7 @@ for _ in range(0):  # flyaways (removed: no wispy strands)
     pts = [tuple(p + dd * (l * t) + curl * (t * t) + V3(0, -0.05 * l * t ** 3, 0)) for t in (0, 0.25, 0.5, 0.75, 1.0)]
     fly[kind_at(p)].append((pts, [1.0, 0.85, 0.6, 0.35, 0.1]))
 for kind, mat in (('a', m_pink), ('b', m_teal)):
-    curve_obj('under' + kind, under[kind], 0.02, mat, 'POLY', 1)
+    curve_obj('under' + kind, under[kind], 0.0075, mat, 'POLY', 1)
     curve_obj('baby' + kind, baby[kind], 0.011, mat, 'POLY', 1)
     curve_obj('fly' + kind, fly[kind], 0.007, mat, 'BEZIER', 2)
 for ob in scene.objects:
@@ -417,7 +418,7 @@ for n, p in [("mouth_smile", dict(smile=0.85, open=0.0)), ("mouth_closed_grin", 
     build_variant(n, mouth_variant(p))
 
 # hair: convert curves to meshes, bake the base->tip colour ramp into vertex colours, join into one mesh
-m_hair, nt_, b_ = new_mat('hair'); setp(b_, Roughness=0.2)
+m_hair, nt_, b_ = new_mat('hair'); setp(b_, Roughness=0.42)
 vc = nt_.nodes.new('ShaderNodeVertexColor'); vc.layer_name = 'Col'; nt_.links.new(vc.outputs['Color'], b_.inputs['Base Color'])
 HAIRCOL = {'a': ((0.004, 0.004, 0.008), (0.03, 0.032, 0.046)), 'b': ((0.004, 0.004, 0.008), (0.028, 0.03, 0.044))}
 hair_objs = []
