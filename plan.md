@@ -228,3 +228,10 @@ Because the camera changes every 2 seconds, almost every shot is new each day, s
 The low end assumes steady-state rendering about 20% faster than these still timings (my estimate); the high end assumes animated, busier scenes cost about 1.3× more (my estimate).
 
 **Remaining work before Episode 1 (estimate, about 5–6 sessions, down from 8.5 because the modeling is now done):** animation system with camera cuts, lip-sync, blinks, chat, call cards, audio at -14 LUFS (1.5); animation library, with run, dive, drag, steer, horn, brace and reactions (1); polish passes on Gig's cap and close-up fur, Nana Dot's teeth, cab shots, cloth detail and contact shadows (1); audio (0.5); directing and fixing the 31 shots (2).
+
+## 12. Voice pacing rules (from the voice review)
+- Voice A (designed Qwen3-TTS VoiceDesign, British, raspy, cocky). Words stay at the model's natural speed; never time-stretch them.
+- Pauses: 0.1–0.25 s between phrases, at most 0.4 s before a punchline. Cut silences by trimming the middle of each gap (12 ms crossfade) with `test10/tighten.py`, including pauses inside a line.
+- Generate each scene's Dex lines in one flowing pass (no "..." in the text), then tighten. Regenerate any line that still sounds unnatural.
+- Tighter audio makes the episode shorter, so fill the time with more action beats and dialogue (more lines for Dex, Lena, Nana, GPS) rather than slowing it down. Episodes must stay at least 62 s.
+- Lip-sync, captions, camera cuts and actions are retimed from the final audio, never the other way round.
