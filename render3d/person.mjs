@@ -212,11 +212,13 @@ export function buildPerson(opts = {}) {
     const mhead = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 18), std(0x9ea3ad, { metalness: 0.9, roughness: 0.25 })); mhead.position.z = 0.27; prop.add(mhead);
     const mring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 24), std(0xd8dbe2, { metalness: 1, roughness: 0.2 })); mring.position.z = 0.19; prop.add(mring);
     prop.position.set(-s * 0.07, -0.205, 0.0); hg.add(prop);
-    // hand-held phone (screen toward the face when the arm is raised); toggled by pose.phone
+    // hand-held phone, cradled: back resting on the palm heel, tilted so its lower long edge sits in the finger hook (fingers curl under and around it), thumb presses the front near the top edge
     const phone = new THREE.Group(); phone.visible = false;
-    phone.add(new THREE.Mesh(new RoundedBoxGeometry(0.15, 0.29, 0.024, 3, 0.02), std(0x17161d, { roughness: 0.25, metalness: 0.5 })));
-    const pscr = new THREE.Mesh(new THREE.PlaneGeometry(0.135, 0.265), new THREE.MeshBasicMaterial({ color: 0x8a5fd0 })); pscr.position.z = 0.013; phone.add(pscr);
-    phone.position.set(-s * 0.05, -0.19, 0.05); phone.rotation.set(0, -s * 0.2, 0); hg.add(phone);
+    const PW = 0.116, PL = 0.236, PT = 0.03;
+    phone.add(new THREE.Mesh(new RoundedBoxGeometry(PT, PW, PL, 4, 0.012), std(0x17161d, { roughness: 0.28, metalness: 0.45 })));
+    const pscr = new THREE.Mesh(new THREE.PlaneGeometry(PL * 0.92, PW * 0.9), new THREE.MeshBasicMaterial({ color: 0x8a5fd0 })); pscr.rotation.set(0, -s * Math.PI / 2, 0); pscr.rotation.order = 'YXZ'; pscr.rotation.z = Math.PI / 2; pscr.position.x = -s * (PT / 2 + 0.0008); phone.add(pscr);
+    phone.userData.base = { x: -s * 0.094, y: -0.148, z: -0.035, rz: -s * 0.40 };
+    phone.position.set(phone.userData.base.x, phone.userData.base.y, phone.userData.base.z); phone.rotation.z = phone.userData.base.rz; hg.add(phone);
     arms[s < 0 ? 'L' : 'R'] = { sh, el, wr, fingers, th: [th1, th2], s, prop, phone };
   }
   rig.j.arms = arms;
@@ -310,7 +312,7 @@ export function setPose(rig, spec) {
     const l = rig.j[k], q = p[k], s = l.s, a = q.hip[0] * D, kn = q.knee * D;
     l.hip.rotation.set(-a, 0, s * q.hip[1] * D);
     l.knee.rotation.set(kn, 0, 0);
-    l.ank.rotation.set(a - kn, 0, -s * q.hip[1] * D); // keep soles flat
+    l.ank.rotation.set(a - kn + (q.foot ?? 0) * D, 0, -s * q.hip[1] * D); // keep soles flat (+ heel/toe roll)
     hmax = Math.max(hmax, rig.L1 * Math.cos(a) * Math.cos(q.hip[1] * D) + rig.L2 * Math.cos(a - kn) * Math.cos(q.hip[1] * D));
   }
   rig.root.position.y = (p.rootY ?? (hmax - (rig.L1 + rig.L2))) + (p.bob ?? 0); rig.root.rotation.x = (p.pitch ?? 0) * D; rig.root.rotation.z = (p.roll ?? 0) * D;

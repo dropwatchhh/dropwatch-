@@ -118,7 +118,7 @@ const builders = {
     const floor = new THREE.Mesh(new THREE.CircleGeometry(3.2, 64), std(0x15122a, { roughness: 0.85 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; dyn.add(floor); const rim = new THREE.Mesh(new THREE.TorusGeometry(3.2, 0.04, 10, 96), new THREE.MeshBasicMaterial({ color: j.ring ?? 0xff2fa0 })); rim.rotation.x = Math.PI / 2; dyn.add(rim);
     sunLight(0xfff0e0, 2.2, [-5, 8, 7], [0, 1.5, 0], 6); const f = new THREE.DirectionalLight(0xff6fb8, 0.9); f.position.set(6, 3, 5); const rm = new THREE.DirectionalLight(0xc4d6ff, 1.5); rm.position.set(-4, 5, -7); const rm2 = new THREE.DirectionalLight(0xd0deff, 1.3); rm2.position.set(4.5, 4.5, -6); const rm3 = new THREE.DirectionalLight(0xdbe6ff, 0.8); rm3.position.set(0, 7, -3); dyn.add(rm2, rm3); dyn.add(f, rm, new THREE.HemisphereLight(0xc9c0ff, 0x3a1a30, 0.5));
     if (j.who === 'gig') { const g = buildGig(); setGigFace(g, j.face ?? { eyes: 'eyes_open', mouth: 'mouth_smile' }); setGigPose(g, j.pose ?? { head: [0, -12, 4], L: { sh: [10, 30], el: 25, curl: 0.2 }, R: { sh: [70, 30], el: 70, curl: 0.0 }, tail: [10, 0] }); place(g.root, 0, 0, 0, j.yaw ?? -0.3, 1.2); }
-    else { const p = await person(j.who); setPose(p, j.pose ?? 'neutral'); setFace(p, j.face ?? {}); place(p.root, 0, 0, 0, j.yaw ?? 0); }
+    else { const p = await person(j.who); H[j.who] = p; if (j.who === 'dex') H.dex = p; setPose(p, j.pose ?? 'neutral'); setFace(p, j.face ?? {}); place(p.root, 0, 0, 0, j.yaw ?? 0); }
   },
   async call(j) {   // Lena in her own 3D room, framed for the video-call card
     sky.studio([[0, '#3b2f5c'], [1, '#8a6ab8']]); exposure(0.85); scene.environment = env; scene.environmentIntensity = 0.45;
@@ -130,7 +130,7 @@ const builders = {
     poster.position.set(3.2, 3.8, -3.1); room.add(poster); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffe0a0 })); lamp.position.set(4.2, 3.4, -2.2); room.add(lamp);
     const lap = new THREE.Mesh(new RoundedBoxGeometry(1.4, 0.06, 1.0, 3, 0.03), std(0x9a9aa8, { metalness: 0.6, roughness: 0.4 })); lap.position.set(-1.7, 2.05, 1.0); lap.castShadow = true; room.add(lap); const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.3, 16), std(0xe8407a)); mug.position.set(1.8, 2.15, 0.9); room.add(mug);
     room.scale.setScalar(0.395); dyn.add(room); sunLight(0xfff4e8, 2.0, [-4, 8, 8], [0, 1.2, 0], 4); const f = new THREE.PointLight(0xffd8f0, 7, 9); f.position.set(0.8, 1.6, 1.8); dyn.add(f, new THREE.HemisphereLight(0xf0e0ff, 0x6a5a7a, 0.6));
-    const l = await person('lena'); setPose(l, j.pose ?? { yaw: 0, spine: [2, 0, 0], head: [0, 0, 0], L: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, R: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, legL: { hip: [85, 4], knee: 85 }, legR: { hip: [85, 4], knee: 85 } }); setFace(l, j.face ?? { eyes: 'eyes_open', brows: 'brows_up', mouth: 'mouth_closed_smirk' });
+    const l = await person('lena'); H.lena = l; setPose(l, j.pose ?? { yaw: 0, spine: [2, 0, 0], head: [0, 0, 0], L: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, R: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, legL: { hip: [85, 4], knee: 85 }, legR: { hip: [85, 4], knee: 85 } }); setFace(l, j.face ?? { eyes: 'eyes_open', brows: 'brows_up', mouth: 'mouth_closed_smirk' });
     place(l.root, 0, -0.14, -0.2, 0); l.j.legL.hip.visible = false; l.j.legR.hip.visible = false; l.jeans?.meshes.forEach(m => { m.visible = false; });
   },
   async props(j) {

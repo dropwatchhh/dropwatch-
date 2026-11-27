@@ -19,28 +19,63 @@ export function install(E) {
     if (H.pigeons) H.pigeons.group.visible = s.anim === 'van'; if (H.tulips) H.tulips.group.visible = s.anim === 'van';
     if (H.van && (s.anim === 'run' || s.anim === 'selfie' || s.anim === 'boot')) H.van.visible = false;
     switch (s.anim) {
+      case 'hand': {   // close-up of a hand (phone grip tests): pose from spec, camera relative to the wrist
+        setPose(H.dex, s.pose); setFace(H.dex, s.face ?? { mouth: 'mouth_smile' }); scene.updateMatrixWorld(true);
+        const arm = H.dex.j.arms[s.side ?? 'R']; const w = V(0, -0.25, 0); arm.wr.localToWorld(w); focus = w;
+        if (s.debug) { const hg = arm.fingers[0][0].parent; const out = {}; arm.fingers.forEach(([f1, f2], i) => { const p1 = V(0, 0, 0), p2 = V(0, 0, 0), tip = V(0, -0.09, 0); f1.localToWorld(p1); f2.localToWorld(p2); f2.localToWorld(tip); out['f' + i] = [p1, p2, tip].map(q => hg.worldToLocal(q.clone()).toArray().map(v => +v.toFixed(3))); }); const th = arm.th[1]; const t = V(0, -0.08, 0); th.localToWorld(t); out.thumbTip = hg.worldToLocal(t).toArray().map(v => +v.toFixed(3)); out.phone = arm.phone.position.toArray().map(v => +v.toFixed(3)); console.error('HANDDBG ' + JSON.stringify(out)); }
+        break; }
+      case 'boot2': {   // jog; the left boot flies off at k=0.34, then arms fling up while the sock foot keeps jogging
+        const S = H.dex.root.scale.x, k = clampT(s.k), gt = A.gait(t, 'jog', S), P = gt.pose, fl = sm(0.45, 0.7, k) * (0.6 + 0.4 * Math.sin(t * 14));
+        P.L = A.mixPose(P.L, { sh: [150, 40], el: 25, curl: [0.1, 0.1, 0.1, 0.1, 0.1] }, fl); P.R = A.mixPose(P.R, { sh: [135, -10], el: 30, curl: [0.1, 0.1, 0.1, 0.1, 0.1] }, fl);
+        P.spine[0] = P.spine[0] * (1 - 0.8 * fl) - 5 * fl; P.yaw = 180 + gt.yaw; setPose(H.dex, P); const z0 = -gt.v * t; H.dex.root.position.set(0, gt.rootY, z0); H.dex.root.updateMatrixWorld(true); { const fm0 = footMin(H.dex); if (fm0 < 0) H.dex.root.position.y -= fm0; }
+        setBoot(H.dex, 'L', k < 0.34); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: s.mouth ?? 'mouth_shout' });
+        const b = H.boot; if (k >= 0.34) { const u = (k - 0.34) * (s.dur ?? 1.4); b.visible = true; b.position.set(0.2 + 0.1 * u, 0.5 + 2.2 * u - 4.9 * u * u, z0 - 0.3 - 2.6 * u); b.rotation.set(6 * u, 1.2 * u, 3 * u); if (b.position.y < 0.05) b.position.y = 0.05; } else b.visible = false;
+        focus = V(0, 0.9, z0); break; }
+      case 'lena': {   // Lena at her desk: dry and minimal; fingers drum, one eyebrow, slow lean-in, small head tilt
+        const L = H.lena, k = sm(0.35, 0.85, t / (s.dur ?? 4)), br = Math.sin(t * 2.0);
+        const drum = (i) => 0.55 + 0.35 * Math.max(0, Math.sin(t * 9 - i * 0.9));
+        const P = { yaw: 0, spine: [2 + 14 * k + 0.6 * br, 1.5 * Math.sin(t * 0.8), 1.2 * Math.sin(t * 0.7)], head: [2 + 6 * k, 3 * Math.sin(t * 0.9) * (1 - k), 4 * Math.sin(t * 0.6) + 5 * k],
+          L: { sh: [38 + 8 * k, 10], el: 66 - 10 * k, curl: [0.4, 0.55, 0.55, 0.6, 0.6] }, R: { sh: [38 + 8 * k, 10], el: 66 - 10 * k, curl: [0.4, drum(0), drum(1), drum(2), drum(3)] },
+          legL: { hip: [85, 4], knee: 85 }, legR: { hip: [85, 4], knee: 85 } };
+        setPose(L, P); const blink = (t % 3.1) < 0.12; setFace(L, { eyes: blink ? 'eyes_closed' : (k > 0.5 ? 'eyes_wide' : 'eyes_half'), brows: k > 0.5 ? 'brows_up' : 'brows_smirk', mouth: k > 0.5 ? 'mouth_closed_worried' : 'mouth_closed_smirk' });
+        scene.updateMatrixWorld(true); const hp = V(0, 0, 0); L.j.neck.getWorldPosition(hp); focus = hp; break; }
+      case 'gait': {   // IK walk/jog: feet planted (no sliding), measured every frame
+        const mode = s.mode ?? 'walk', S = H.dex.root.scale.x, gt = A.gait(t, mode, S); const P = gt.pose; P.yaw = 180 + (s.faceYaw ?? 0) + gt.yaw;
+        if (s.phone) { P.R = { sh: [62, 16], el: 108, curl: [0.45, 1.1, 1.12, 1.14, 1.15], phone: true, roll: -35 }; P.head = [P.head[0] + 4, P.head[1], 0]; }
+        setPose(H.dex, P); const z0 = -gt.v * t; H.dex.root.position.set(-gt.lat * Math.cos(Math.PI), gt.rootY, z0 + 0); H.dex.root.updateMatrixWorld(true);
+        setFace(H.dex, { eyes: 'eyes_open', brows: 'brows_up', mouth: s.mouth ?? 'mouth_smile' });
+        const ft = { L: V(0, -0.225, 0.1), R: V(0, -0.225, 0.1) }; H.dex.j.legL.ank.localToWorld(ft.L); H.dex.j.legR.ank.localToWorld(ft.R);
+        { const fm0 = footMin(H.dex); if (fm0 < 0) { H.dex.root.position.y -= fm0; H.dex.root.updateMatrixWorld(true); } }
+        console.error('GAITCHK ' + JSON.stringify({ t, mode, stance: gt.stance, L: ft.L.toArray().map(v => +v.toFixed(4)), R: ft.R.toArray().map(v => +v.toFixed(4)), min: +footMin(H.dex).toFixed(4) }));
+        focus = V(0, 0.9, z0); break; }
       case 'run': case 'selfie': {
         const sp = s.speed ?? 4.2, p = A.stridePhase(t, sp); setPose(H.dex, A.run(p, { amp: s.amp ?? 1, phone: s.anim === 'selfie', yaw: 180 })); H.dex.root.position.set(0, H.dex.root.position.y, -sp * t); fixGround(H.dex); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: s.mouth ?? 'mouth_shout', ...face }); focus = V(0, 1.0, -sp * t); break; }
       case 'boot': {
         const sp = 4.2, p = A.stridePhase(t * 1.0, sp); { const P = A.bootLoss(clampT(s.k), p); P.yaw = 180; setPose(H.dex, P); } setBoot(H.dex, 'L', clampT(s.k) < 0.34); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: s.mouth ?? 'mouth_shout' });
         const z0 = -sp * t; H.dex.root.position.set(0, H.dex.root.position.y, z0); fixGround(H.dex); focus = V(0, 1.0, z0);
         const b = H.boot, k = clampT(s.k); if (k >= 0.34) { const u = (k - 0.34) * (s.dur ?? 1.4); b.visible = true; b.position.set(-0.1 + 0.2 * u, 0.5 + 2.6 * u - 4.9 * u * u * 1.0, z0 + 0.4 - 4.2 * u); b.rotation.set(6 * u, 1.2 * u, 3 * u); if (b.position.y < 0.05) b.position.y = 0.05; } else b.visible = false; break; }
-      case 'chase': {   // run up behind the moving van, plant, jump, grab the bumper, get dragged (continuous)
-        const tt = s.tt, Z0 = -6 + 2.8 + 4.0, vzNow = H.van.position.z, bump = vzNow + 2.88;
-        let u, z0 = Z0 - 4.2 * Math.min(tt, 1.6) - 2.6 * Math.max(0, Math.min(tt, 1.95) - 1.6);
-        if (tt < 1.6) u = 0.25 * tt / 1.6; else if (tt < 1.95) u = 0.25 + 0.1 * (tt - 1.6) / 0.35; else if (tt < 2.75) u = 0.35 + 0.43 * (tt - 1.95) / 0.8; else u = 0.78 + 0.22 * sm2(2.75, 3.2, tt);
-        const P = A.dive(u); const run = A.run(A.stridePhase(tt, 4.2), { amp: 1.15, yaw: 180 }); const a = (tt - 1.95) / 0.8;
-        const rw = 1 - sm2(0.2, 0.3, u); const Q = rw > 0.001 ? A.mixPose(P, run, rw) : P; Q.yaw = 180;
-        if (tt >= 2.75) { const dr = A.drag(tt, {}); Q.legL = dr.legL; Q.legR = dr.legR; }
-        const place = (pitch) => { Q.pitch = pitch; setPose(H.dex, Q); H.dex.root.rotation.y = Math.PI; H.dex.root.position.set(0, H.dex.root.position.y, z0);
-          if (tt < 1.95) fixGround(H.dex);
-          else if (tt < 2.75) { H.dex.root.position.y = 0.05 + 0.95 * Math.sin(Math.PI * Math.max(0, a)) * (1 - 0.35 * a) + 0.28 * a; }
+      case 'chase': {   // IK jog up behind the moving van, plant, jump, grab the bumper, get dragged (continuous, with overlapping head/arm lag)
+        const tt = s.tt, S = H.dex.root.scale.x, bump = H.van.position.z + 2.88, vJog = A.GAITS.jog.v, GAP = 3.0;
+        const zRun = (q) => (-6 + (s.vanZ0 ?? 0) + 2.88 + GAP) - vJog * Math.min(q, 1.6);   // Dex ground track while jogging (the van drives away at its own speed)
+        const poseAt = (q) => {
+          let u; if (q < 1.6) u = 0.25 * q / 1.6; else if (q < 1.95) u = 0.25 + 0.1 * (q - 1.6) / 0.35; else if (q < 2.75) u = 0.35 + 0.43 * (q - 1.95) / 0.8; else u = 0.78 + 0.22 * sm2(2.75, 3.2, q);
+          const P = A.dive(u); const g = A.gait(Math.min(q, 1.6), 'jog', S); const rw = 1 - sm2(0.2, 0.3, u);
+          const Q = rw > 0.001 ? A.mixPose(P, g.pose, rw) : P; if (q >= 2.75) { const dr = A.drag(q, {}); Q.legL = dr.legL; Q.legR = dr.legR; } return { Q, P, g, u };
+        };
+        const cur = poseAt(tt), lagH = poseAt(Math.max(0, tt - 0.07)), lagA = poseAt(Math.max(0, tt - 0.04));
+        const Q = cur.Q; Q.head = lagH.Q.head; Q.spine = [lerpA(cur.Q.spine[0], lagA.Q.spine[0], 0.5), cur.Q.spine[1], cur.Q.spine[2]]; Q.L = { ...Q.L, el: lagA.Q.L.el, curl: lagA.Q.L.curl }; Q.R = { ...Q.R, el: lagA.Q.R.el, curl: lagA.Q.R.curl };
+        const z0 = zRun(tt) - (tt > 1.6 ? 1.2 * Math.min(1, (tt - 1.6) / 0.35) : 0); const a = (tt - 1.95) / 0.8; const u = cur.u;
+        const place = (pitch) => { Q.yaw = 180; Q.pitch = pitch; setPose(H.dex, Q); H.dex.root.rotation.y = Math.PI; H.dex.root.position.set(0, tt < 1.6 ? cur.g.rootY : H.dex.root.position.y, z0);
+          if (tt >= 1.6 && tt < 1.95) { H.dex.root.updateMatrixWorld(true); fixGround(H.dex); }
+          else if (tt >= 1.95 && tt < 2.75) { H.dex.root.position.y = 0.05 + 0.95 * Math.sin(Math.PI * Math.max(0, a)) * (1 - 0.35 * a) + 0.28 * a; }
           const hm = handMid(H.dex), w = tt < 1.95 ? 0 : (tt < 2.75 ? Math.pow(Math.min(1, a), 1.6) : 1);
           H.dex.root.position.z += w * (bump - hm.z); if (tt >= 2.55) H.dex.root.position.y += sm2(2.55, 2.85, tt) * (0.5 - handMid(H.dex).y);
           H.dex.root.updateMatrixWorld(true); return footMin(H.dex); };
         if (tt >= 2.75) { let lo = 30, hi = 84; for (let i = 0; i < 9; i++) { const mid = (lo + hi) / 2, fm = place(mid); if (fm > 0.02) hi = mid; else lo = mid; } const fm = place((lo + hi) / 2); if (fm < 0) { H.dex.root.position.y -= fm; } }
-        else { place(P.pitch); const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
-        setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: s.mouth ?? 'mouth_shout' }); focus = V(0, 0.6, H.dex.root.position.z - 0.8); break; }
+        else { place(Q.pitch ?? 0); const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
+        if (tt < 1.6) H.dex.root.rotation.y = Math.PI + cur.g.yaw * Math.PI / 180;
+        setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: s.mouth ?? 'mouth_shout' }); const hmx = handMid(H.dex); if (tt >= 2.75) console.error('GRABCHK ' + JSON.stringify({ tt, dz: +(hmx.z - bump).toFixed(3), dy: +(hmx.y - 0.5).toFixed(3), foot: +footMin(H.dex).toFixed(3) }));
+        focus = V(0, 0.6, H.dex.root.position.z - 0.8); break; }
       case 'dive': {
         H.dex.root.position.set(0, 0, rear + lerp(3.4, 1.9, sm(0.18, 0.68, t))); H.dex.root.rotation.y = Math.PI; setPose(H.dex, A.dive(t)); H.dex.root.rotation.y = Math.PI; setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: 'mouth_shout' }); focus = V(0, 0.7, rear + 1.2); break; }
       case 'drag': {
@@ -59,7 +94,7 @@ export function install(E) {
         if (s.what === 'cover') { setGigPose(gig, A.gigCover(t)); setGigFace(gig, { eyes: 'eyes_closed', mouth: 'mouth_open' }); }
         else if (s.what === 'look') { setGigPose(gig, A.gigLookCam(t, s.yaw ?? 42)); setGigFace(gig, { eyes: 'eyes_wide', mouth: 'mouth_smile' }); }
         else {
-          setGigPose(gig, { head: [-3, 0, 0], L: { sh: [40, 10], el: 60, curl: 1 }, R: { sh: [40, 10], el: 60, curl: 1 }, legL: { hip: 85, knee: 80 }, legR: { hip: 85, knee: 80 }, tail: [20, 0] }); scene.updateMatrixWorld(true);
+          setGigPose(gig, { spine: [1.4 * Math.sin(t * 2.3) + (s.what === 'horn' ? 5 : 0), 0, 0], head: [-3 + 2 * Math.sin(t * 2.1 - 0.4) + (s.what === 'horn' ? 3 : 0), 4 * Math.sin(t * 1.3), 3 * Math.sin(t * 0.9)], L: { sh: [40, 10], el: 60, curl: 1 }, R: { sh: [40, 10], el: 60, curl: 1 }, legL: { hip: 85, knee: 80 }, legR: { hip: 85, knee: 80 }, tail: [20 + 14 * Math.sin(t * 2.6 - 0.8), 10 * Math.sin(t * 1.9)] }); scene.updateMatrixWorld(true);
           const press = s.what === 'horn' ? Math.max(0, Math.sin(t * 2 * Math.PI * 2.2 - 1.2)) : 0;
           w.rotation.z = 0.5; scene.updateMatrixWorld(true);
           A.ikPaw(THREE, gig, 'L', w.localToWorld(V(0.62 * Math.cos(2.85), 0.62 * Math.sin(2.85), 0)));
@@ -75,4 +110,5 @@ export function install(E) {
     camera.fov = c.fov ?? 40; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); renderer.render(scene, camera);
   };
 }
+const lerpA = (a, b2, t) => a + (b2 - a) * t;
 const clampT = (k) => Math.min(1, Math.max(0, k ?? 0)), lerp = (a, b, t) => a + (b - a) * t, sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };

@@ -81,7 +81,7 @@ export function ikPaw(THREE, gig, key, target, init) {
 }
 
 // ---------------- Nana Dot ----------------
-export const nanaWatch = (t) => base({ yaw: 0, spine: [4, 0, 0], head: [10 + 2 * Math.sin(t * 3), 0, 0], L: { sh: [8, 10], el: 14, curl: RELAX }, R: { sh: [62, 8], el: 92, curl: FIST, phone: true } });
+export const nanaWatch = (t) => base({ yaw: 3 * Math.sin(t * 1.3), spine: [3 + 0.8 * Math.sin(t * 2.2), 2 * Math.sin(t * 1.3), 2.5 * Math.sin(t * 1.3)], head: [10 + 2 * Math.sin(t * 3), 5 * Math.sin(t * 1.1), 5 + 3 * Math.sin(t * 1.7)], L: { sh: [10, 36], el: 104, curl: FIST }, R: { sh: [62, 12], el: 108, curl: [0.45, 1.1, 1.12, 1.14, 1.15], phone: true, roll: -30 }, legL: { hip: [4, 8 + 2 * Math.sin(t * 1.3)], knee: 6 }, legR: { hip: [-4, 3], knee: 14 + 4 * Math.sin(t * 1.3) } });
 export function nanaPutDown(t) {   // holding the watering can, bends, sets it down, straightens
   const down = sm(0.1, 0.5, t) * (1 - sm(0.62, 0.95, t));
   return base({ spine: [28 * down, 0, 0], head: [-6 * down, 0, 0], R: { sh: [lerp(24, 52, down), 14], el: lerp(40, 22, down), curl: FIST }, L: { sh: [lerp(8, 30, down), 10], el: lerp(14, 40, down), curl: RELAX }, legL: { hip: [10 * down, 6], knee: 22 * down }, legR: { hip: [10 * down, 6], knee: 22 * down } });
@@ -133,4 +133,37 @@ export function dive(u) {
   P.legL = mixv(P.legL, { hip: [48, 4], knee: 84 }, crouch); P.legR = mixv(P.legR, { hip: [48, 4], knee: 84 }, crouch);
   P.pitch = 79 * Math.pow(sm(0.34, 0.8, u), 0.9);
   return P;
+}
+
+// ================= IK gait (walk / jog): feet planted exactly during stance (no sliding), bending knees, hip height bob, counter-rotating spine, opposite arm swing =================
+const L1g = 0.9, L2g = 0.85, ANK = 0.225, HIPYg = 2.0;
+export function legIK(dz, dyDown) {   // ankle target relative to hip (rig units): dz forward, dyDown downward. returns degrees
+  const R = Math.min(Math.hypot(dz, dyDown), L1g + L2g - 1e-3), ci = (L1g * L1g + L2g * L2g - R * R) / (2 * L1g * L2g), kappa = Math.PI - Math.acos(clamp(ci, -1, 1));
+  const th = Math.atan2(dz, dyDown), delta = Math.atan2(L2g * Math.sin(kappa), L1g + L2g * Math.cos(kappa));
+  return { hip: (th + delta) / D, knee: kappa / D };
+}
+export const GAITS = {
+  walk: { v: 1.3, T: 0.98, duty: 0.6, lift: 0.07, D0: 1.6, bob: 0.045, armSw: 24, elb: 26, lean: 3, twist: 6, sway: 0.02, headStab: 0.8 },
+  jog: { v: 2.7, T: 0.56, duty: 0.5, lift: 0.12, D0: 1.5, bob: 0.07, armSw: 48, elb: 80, lean: 11, twist: 9, sway: 0.025, headStab: 0.75 },
+};
+// returns { pose, rootY (world meters, ground at 0), lat (m, local sideways), yaw (deg, pelvis yaw) } for rig scale S at time t
+export function gait(t, mode = 'walk', S = 0.41, o = {}) {
+  const G = { ...GAITS[mode], ...o }, zA = (G.v * G.duty * G.T / 2) / S, om = 2 * Math.PI / G.T;
+  const leg = (ph) => {   // ph: 0..1 cycle phase of this leg; returns {dz, dy, foot, stanceU, st}
+    const u = ((ph % 1) + 1) % 1;
+    if (u < G.duty) { const k = u / G.duty; return { dz: zA - 2 * zA * k, lift: 0, st: true, k, foot: 14 * (1 - sm(0, 0.18, k)) - 30 * sm(0.78, 1, k) }; }
+    const s = (u - G.duty) / (1 - G.duty), e = s * s * (3 - 2 * s); return { dz: -zA + 2 * zA * e, lift: G.lift / S * Math.pow(Math.sin(Math.PI * s), 0.85), st: false, k: s, foot: -22 * Math.sin(Math.PI * Math.min(1, s * 1.6)) * (1 - s) + 12 * sm(0.55, 1, s) };
+  };
+  const ph0 = t / G.T, A = leg(ph0), B = leg(ph0 + 0.5), stanceLeg = A.st ? A : B;
+  const Dh = G.D0 + G.bob * Math.max(A.st ? Math.sin(Math.PI * A.k) : 0, B.st ? Math.sin(Math.PI * B.k) : 0);   // hip lowest at heel strike/toe-off, highest mid stance
+  const solve = (lg) => legIK(lg.dz, Dh - lg.lift);
+  const ikA = solve(A), ikB = solve(B);   // A = leg L, B = leg R
+  const fwdA = A.dz / zA, fwdB = B.dz / zA;   // -1..1 how far forward each foot is
+  const armL = 10 + G.armSw * (-fwdB) * 1.0, armR = 10 + G.armSw * (-fwdA) * 1.0;
+  const P = { yaw: 0, spine: [G.lean, -G.twist * (fwdA - fwdB) * 0.5, 2.2 * (fwdB - fwdA) * 0.5], head: [-G.lean * G.headStab * 0.6, G.twist * (fwdA - fwdB) * 0.5 * G.headStab, 0],
+    L: { sh: [armL, 8], el: G.elb + 14 * Math.max(0, fwdB), curl: RELAX }, R: { sh: [armR, 8], el: G.elb + 14 * Math.max(0, fwdA), curl: RELAX },
+    legL: { hip: [ikA.hip, 2], knee: ikA.knee, foot: A.foot }, legR: { hip: [ikB.hip, 2], knee: ikB.knee, foot: B.foot } };
+  const rootY = S * (Dh + ANK - HIPYg);
+  const yaw = G.twist * 0.7 * (fwdA - fwdB) * 0.5, lat = G.sway * (A.st ? 1 : -1) * Math.sin(Math.PI * stanceLeg.k);
+  return { pose: P, rootY, lat, yaw, v: G.v, stance: { L: A.st, R: B.st }, zA };
 }
