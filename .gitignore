@@ -4,3 +4,8 @@ reference/
 voice/
 render3d/node_modules/
 assets/*.glb
+test10/frames/
+test10/ov/
+test10/*.wav
+voice/qwen/
+voice/kokoro/
