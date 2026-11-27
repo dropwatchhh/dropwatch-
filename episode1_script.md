@@ -43,7 +43,6 @@ That is **16 beats and 14 distinct surprises in 66 seconds**, one roughly every 
 ## What gets built for this episode
 Dex, Gig, Nana Dot, Priya, Lena (a stream tile); the van (outside and inside), the parking lot, Maple Street, the flower stand, the noodle cart; the phone and stream overlay, chat bubbles, caption and vote-card templates; the guitar and the tripod.
 
-## Still to approve
-1. This script, or tell me what to change.
-2. The hair (Dex's approval depends on it). Then the 5-second 2.5D sprite test with voice.
-3. Whether the van and street look cartoon-simple or detailed.
+## Status
+- Script v2: **approved**. Dex and his hair: **approved**. Van and street: **cartoon-simple**.
+- Still to approve: the 5-second sprite test (`output/dex_sprite_test_5s.mp4`). The full episode waits for that.

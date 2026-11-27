@@ -135,3 +135,21 @@ Installed from the official tarball (407 MB download, **1.3 GB unpacked**, check
 | 12 fps | 744–840 | 21–24 hours |
 
 The daily window for rendering is about 2 hours. **Blender animation cannot meet a daily 2 PM schedule on this machine**, even at 12 fps, and a full scene with a van, street and several characters would be slower than this head-and-bust test (my estimate: 1.5–3×; not measured). three.js renders about 2 s per frame, so a 62–70 s episode takes about 1 hour.
+
+## 8. Sprite test result (Dex, 5 s, Blender layers + compositor)
+
+Files: `output/dex_sprite_test_5s.mp4` (1080×1920, 30 fps, 5.0 s, voice), `output/dex_sprite_test_frames.png`, sprites in `sprites/dex/`, scripts `blender/dex_sprites.py`, `sprites/sprite_voice.py`, `sprites/compose_test.py`.
+
+**How it works:** Blender renders Dex once as a full-frame base (head, hair, jacket) and then as small, perfectly aligned transparent face layers: 5 eye states, 4 brow sets, 7 mouth shapes. A compositor stacks the right layers for each frame from the voice (loudness and spectral centroid pick the mouth shape), adds blinks, cross-fades between expressions, and adds a slow push-in and big captions.
+
+| Measured render time (1080×1920, 64 samples, this machine) | Per item | Total in the test |
+|---|---|---|
+| Base (head, hair, jacket), full frame | **120 s** | 120 s |
+| Background plate | 7.5 s | 7.5 s |
+| Eye state (5) | 10–12 s | 55 s |
+| Brow set (4) | 8.4–8.6 s | 34 s |
+| Mouth shape (7) | 8.0–9.6 s | 60 s |
+| **Sprite library for the test** | | **276 s (4.6 min)** |
+| Compositing + encoding | **0.067 s per frame** (10 s for 150 frames) | 10 s |
+
+Loudness of the test audio: -19.5 LUFS (a final mix should be raised toward about -14).

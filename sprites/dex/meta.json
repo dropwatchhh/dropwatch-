@@ -1,0 +1,212 @@
+{
+ "probe_bg": {
+  "seconds": 7.5,
+  "box": [
+   0,
+   0,
+   1080,
+   1920
+  ],
+  "samples": 8
+ },
+ "probe_mouth": {
+  "seconds": 6.4,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 32
+ },
+ "probe_eyes": {
+  "seconds": 7.8,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 32
+ },
+ "probe_brows": {
+  "seconds": 6.6,
+  "box": [
+   175,
+   526,
+   904,
+   894
+  ],
+  "samples": 32
+ },
+ "base": {
+  "seconds": 120.1,
+  "box": [
+   0,
+   0,
+   1080,
+   1920
+  ],
+  "samples": 64
+ },
+ "eyes_open": {
+  "seconds": 10.8,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 64
+ },
+ "eyes_half": {
+  "seconds": 11.2,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 64
+ },
+ "eyes_closed": {
+  "seconds": 11.7,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 64
+ },
+ "eyes_wide": {
+  "seconds": 9.9,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 64
+ },
+ "eyes_squint": {
+  "seconds": 11.0,
+  "box": [
+   144,
+   741,
+   935,
+   1129
+  ],
+  "samples": 64
+ },
+ "brows_up": {
+  "seconds": 8.4,
+  "box": [
+   175,
+   526,
+   904,
+   894
+  ],
+  "samples": 64
+ },
+ "brows_high": {
+  "seconds": 8.6,
+  "box": [
+   175,
+   526,
+   904,
+   894
+  ],
+  "samples": 64
+ },
+ "brows_worried": {
+  "seconds": 8.6,
+  "box": [
+   175,
+   526,
+   904,
+   894
+  ],
+  "samples": 64
+ },
+ "brows_smirk": {
+  "seconds": 8.6,
+  "box": [
+   175,
+   526,
+   904,
+   894
+  ],
+  "samples": 64
+ },
+ "mouth_closed_grin": {
+  "seconds": 8.1,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_closed_worried": {
+  "seconds": 8.0,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_closed_smirk": {
+  "seconds": 8.0,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_A": {
+  "seconds": 9.6,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_E": {
+  "seconds": 9.2,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_O": {
+  "seconds": 8.3,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ },
+ "mouth_Obig": {
+  "seconds": 8.8,
+  "box": [
+   294,
+   989,
+   785,
+   1426
+  ],
+  "samples": 64
+ }
+}
