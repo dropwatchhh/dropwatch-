@@ -22,7 +22,7 @@ const head = async n => { if (!glbs[n]) { glbs[n] = await new Promise(r => loade
 const SKIN = { dex: 0xc4906f, nana: 0xcba694, lena: 0xbd8f70 };
 async function person(kind, o = {}) {
   const base = { dex: { skin: 0xc4906f }, nana: { skin: 0xcba694, skinD: 0xa58370, leather: 0xb8283a, leatherS: 0xb8283a, leatherD: 0x8f1f2d, tee: 0xf1e4cc, jeans: 0x5b3f8a, boot: 0xf4f4f4, sole: 0xc9c9d4 }, lena: { skin: 0xbd8f70, skinD: 0x9a6f55, leather: 0x24315e, leatherS: 0x24315e, leatherD: 0x1a2447, tee: 0xf7f3ec, jeans: 0x2a2a38 } }[kind];
-  const opts = { dex: { scale: 0.41, headScale: 0.52 }, nana: { punk: false, bowling: true, pearls: true, sneakers: true, scale: 0.36, fabric: false, torsoStretch: 1.7, headScale: 0.52 }, lena: { punk: false, fabric: true, sneakers: true, scale: 0.395, headScale: 0.52 } }[kind];
+  const opts = { dex: { scale: 0.41, headScale: 0.52 }, nana: { punk: false, bowling: true, pearls: true, sneakers: true, scale: 0.36, fabric: false, torsoStretch: 1.7, headScale: 0.52 }, lena: { punk: false, fabric: true, sneakers: true, scale: 0.395, headScale: 0.52, lapels: true } }[kind];
   const rig = buildPerson({ ...opts, mats: base, ...o }); rig.root.userData.base = rig.root.scale.x; rig.attachHead(await head(kind)); rig.root.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return rig;
 }
 const place = (obj, x, y, z, ry = 0, s = 1) => { obj.position.set(x, y, z); obj.rotation.y = ry; obj.scale.setScalar(s * (obj.userData.base ?? 1)); dyn.add(obj); return obj; };
@@ -74,17 +74,19 @@ const builders = {
     const gt = makeGuitar(); gt.scale.setScalar(0.34); gt.position.set(j.vanBeside ? 0.5 : 4.0, j.vanBeside ? 0 : 0.7, BZ + (j.vanBeside ? 0.2 : 0)); if (j.vanBeside) { gt.rotation.set(0, 0.3, 0.1); gt.position.y = 0.52; gt.rotation.z = 1.2; } gt.rotation.set(0, 0.3, 0.1); dyn.add(gt); if (j.vanBeside) { const t = makeTripod(); place(t, 3.1, 0, BZ + 0.3, 0.5); }
   },
   async street(j) {
+    if (j.tilt) dyn.rotation.x = j.tilt;
     sky.day(); exposure(0.9); scene.environment = env; scene.environmentIntensity = 0.35; makeStreet(dyn);
-    const stand = makeStand(); place(stand, 0, 0, -62, 0, 1.3); const sl = sunLight(0xfff0d8, 2.8, [10, 22, 12], [0, 0, -20], 40); dyn.add(new THREE.HemisphereLight(0xcfe4ff, 0x6a8a5a, 0.6));
+    const stand = makeStand(); place(stand, 0, 0, -62, 0, 0.62); const sl = sunLight(0xfff0d8, 2.8, [10, 22, 12], [0, 0, -20], 40); dyn.add(new THREE.HemisphereLight(0xcfe4ff, 0x6a8a5a, 0.6));
     const van = makeVan(); place(van, 0, 0, j.vanZ ?? -8, Math.PI / 2, 0.8); van.userData.wheels.forEach(w => w.rotation.z = -(j.wheel ?? 0.4)); const gig = buildGig(); setGigFace(gig, { eyes: 'eyes_wide', mouth: 'mouth_chitter' }); van.add(gig.root); gig.root.position.set(2.5, 1.1, 1.0); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.225);
     const guitar = makeGuitar(); guitar.scale.setScalar(0.9); van.add(guitar); guitar.position.set(1.4, 3.0, 1.6); guitar.rotation.set(0.1, 0, -1.2);
-    if (j.nana !== false) { const n = await person('nana'); setPose(n, j.nanaPose ?? 'neutral'); setFace(n, { eyes: 'eyes_wide', brows: 'brows_high', mouth: 'mouth_shout' }); place(n.root, 0, 0, -62 - 0.65, 0, 1.3); }
+    if (j.nana !== false) { const n = await person('nana'); setPose(n, j.nanaPose ?? 'neutral'); setFace(n, { eyes: 'eyes_wide', brows: 'brows_high', mouth: 'mouth_shout' }); place(n.root, -2.1, 0, -62 + 0.4, 0.15, 1); }
     for (let i = 0; i < 9; i++) { const p = makePigeon(); p.position.set(-2 + Math.random() * 4, 1.2 + Math.random() * 2.2, (j.vanZ ?? -8) - 6 - Math.random() * 8); p.rotation.y = Math.PI / 2 + (Math.random() - 0.5) * 0.8; p.userData.wings.forEach((w, k) => w.rotation.x = (k ? 1 : -1) * (0.6 + Math.random() * 0.5)); dyn.add(p); }
   },
   async stand(j) {
+    if (j.tilt) dyn.rotation.x = j.tilt;
     sky.golden(); exposure(0.85); scene.environment = env; scene.environmentIntensity = 0.3; dyn.add(sunSprite(-20, 8, -50, 50)); makeStreet(dyn);
-    const stand = makeStand(); place(stand, 0, 0, 0, 0, 1.0); sunLight(0xffb878, 2.4, [-10, 12, -6], [0, 1.5, 0], 12); dyn.add(new THREE.HemisphereLight(0xffd8b0, 0x6a8a5a, 0.55)); const fl = new THREE.DirectionalLight(0xa8c0ff, 0.5); fl.position.set(6, 5, 12); dyn.add(fl);
-    const n = await person('nana'); setPose(n, j.nanaPose ?? { yaw: 0, spine: [4, 0, 0], head: [0, 0, 0], L: { sh: [40, 40], el: 40, curl: [0.8, 0.9, 1, 1, 1] }, R: { sh: [40, 40], el: 40, curl: [0.8, 0.9, 1, 1, 1] }, legL: { hip: [0, 8], knee: 6 }, legR: { hip: [0, 8], knee: 6 } }); setFace(n, j.face ?? { eyes: 'eyes_squint', brows: 'brows_angry', mouth: 'mouth_shout' }); place(n.root, 0, 0.0, -0.3, 0, 1.0); n.root.position.y = 0.95; n.root.position.z = -0.35;
+    const stand = makeStand(); place(stand, 0, 0, 0, 0, 0.62); sunLight(0xffb878, 2.4, [-10, 12, -6], [0, 1.0, 0], 12); dyn.add(new THREE.HemisphereLight(0xffd8b0, 0x6a8a5a, 0.55)); const fl = new THREE.DirectionalLight(0xa8c0ff, 0.5); fl.position.set(6, 5, 12); dyn.add(fl);
+    const n = await person('nana'); const BR = { yaw: 0, spine: [-6, 0, 0], head: [-4, 0, 0], L: { sh: [30, 78], el: 30, curl: [0.1, 0.1, 0.1, 0.1, 0.1] }, R: { sh: [30, 78], el: 30, curl: [0.1, 0.1, 0.1, 0.1, 0.1] }, legL: { hip: [6, 20], knee: 22 }, legR: { hip: [6, 20], knee: 22 } }; setPose(n, j.nanaPose ?? BR); setFace(n, j.face ?? { eyes: 'eyes_wide', brows: 'brows_angry', mouth: 'mouth_shout' }); place(n.root, -2.05, 0, 0.45, 0.12, 1);
     const wc = null;
   },
   async cab(j) {
@@ -114,9 +116,9 @@ const builders = {
     const poster = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 3), new THREE.MeshBasicMaterial({ map: tex(cv(256, 340, (c, w, h) => { c.fillStyle = '#10243f'; c.fillRect(0, 0, w, h); c.fillStyle = '#ff2fa0'; c.fillRect(20, 30, w - 40, 130); c.fillStyle = '#1fe6d2'; c.font = '900 52px Inter, sans-serif'; c.textAlign = 'center'; c.fillText('SHOW', w / 2, 100); c.fillStyle = '#fff'; c.font = '700 28px Inter, sans-serif'; c.fillText('LIVE · SATURDAY', w / 2, 220); c.fillText('HEADLINE SLOT', w / 2, 262); })) }));
     poster.position.set(3.2, 3.8, -3.1); room.add(poster); const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffe0a0 })); lamp.position.set(4.2, 3.4, -2.2); room.add(lamp);
     const lap = new THREE.Mesh(new RoundedBoxGeometry(1.4, 0.06, 1.0, 3, 0.03), std(0x9a9aa8, { metalness: 0.6, roughness: 0.4 })); lap.position.set(-1.7, 2.05, 1.0); lap.castShadow = true; room.add(lap); const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.3, 16), std(0xe8407a)); mug.position.set(1.8, 2.15, 0.9); room.add(mug);
-    dyn.add(room); sunLight(0xfff4e8, 2.0, [-4, 8, 8], [0, 2, 0], 8); const f = new THREE.PointLight(0xffd8f0, 30, 14); f.position.set(2, 3.6, 4); dyn.add(f, new THREE.HemisphereLight(0xf0e0ff, 0x6a5a7a, 0.6));
+    room.scale.setScalar(0.395); dyn.add(room); sunLight(0xfff4e8, 2.0, [-4, 8, 8], [0, 1.2, 0], 4); const f = new THREE.PointLight(0xffd8f0, 7, 9); f.position.set(0.8, 1.6, 1.8); dyn.add(f, new THREE.HemisphereLight(0xf0e0ff, 0x6a5a7a, 0.6));
     const l = await person('lena'); setPose(l, j.pose ?? { yaw: 0, spine: [2, 0, 0], head: [0, 0, 0], L: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, R: { sh: [52, 10], el: 60, curl: [0.3, 0.4, 0.45, 0.5, 0.55] }, legL: { hip: [85, 4], knee: 85 }, legR: { hip: [85, 4], knee: 85 } }); setFace(l, j.face ?? { eyes: 'eyes_open', brows: 'brows_up', mouth: 'mouth_closed_smirk' });
-    place(l.root, 0, 0, 0.0, 0); l.root.position.y = 0.55; l.root.position.z = -0.35; l.j.legL.hip.visible = false; l.j.legR.hip.visible = false;
+    place(l.root, 0, -0.14, -0.2, 0); l.j.legL.hip.visible = false; l.j.legR.hip.visible = false; l.jeans?.meshes.forEach(m => { m.visible = false; });
   },
   async props(j) {
     sky.studio([[0, '#1d1738'], [1, '#4a3a7a']]); exposure(0.9); scene.environment = env; scene.environmentIntensity = 0.5;

@@ -2,6 +2,7 @@
 // Rig: chest/neck/head, shoulders/elbows/wrists/fingers, hips/knees/ankles; expression + pose API.
 import * as THREE from 'three';
 import { buildJacket } from './jacket.mjs';
+import { buildJeans } from './jeans.mjs';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
@@ -26,7 +27,7 @@ const leatherBump = canvasTex(512, (g, s) => { g.fillStyle = '#808080'; g.fillRe
 const phys = (c, o = {}) => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.4, ...o });
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, ...o });
 export const MBASE = {
-  skin: phys(0xb78262, { roughness: 0.5, sheen: 0.5, sheenColor: new THREE.Color(0xff9a80), sheenRoughness: 0.4, bumpMap: skinBump, bumpScale: 0.8 }),
+  skin: phys(0xb78262, { roughness: 0.64, sheen: 0.2, sheenColor: new THREE.Color(0xff9a80), sheenRoughness: 0.4, bumpMap: skinBump, bumpScale: 0.8 }),
   skinD: std(0x9a6a4f),
   leather: phys(0x1d1d25, { roughness: 0.36, clearcoat: 0.6, clearcoatRoughness: 0.35, side: THREE.DoubleSide, bumpMap: leatherBump, bumpScale: 2.2 }),
   leatherD: phys(0x121218, { roughness: 0.38, clearcoat: 0.6 }),
@@ -109,6 +110,7 @@ function headMesh() {
 export function buildPerson(opts = {}) {
   const M = {}; for (const k of Object.keys(MBASE)) M[k] = MBASE[k].clone(); for (const [k, v] of Object.entries(opts.mats || {})) M[k].color.set(v);
   const PUNK = opts.punk !== false;
+  const NAIL = std(0xe9b9a6, { roughness: 0.4 });
   if (opts.fabric) for (const k of ['leather', 'leatherS', 'leatherD']) { M[k].clearcoat = 0; M[k].roughness = 0.85; M[k].bumpScale = 0; }
   const root = new THREE.Group();
   const rig = { root, j: {} };
@@ -189,21 +191,21 @@ export function buildPerson(opts = {}) {
     if (s > 0) { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.028, 10, 24), M.wrist); bd.rotation.x = Math.PI / 2; bd.position.y = -0.03; wr.add(bd); }
     // hand: big rounded palm, 4 two-joint fingers with knuckle spheres, 2-joint thumb; optional hand-held mic prop
     const hg = pivot(wr, 0, 0, 0); hg.scale.setScalar(1.42);
-    hg.add(ell(M.skin, 0.064, 0.092, 0.092, 0, -0.105, 0, 28));
+    hg.add(ell(M.skin, 0.052, 0.092, 0.092, 0, -0.105, 0, 28));
     hg.add(ell(M.skin, 0.05, 0.05, 0.07, -s * 0.03, -0.045, 0, 20));                 // wrist / heel of the hand
     const fingers = [];
-    const zs = [0.064, 0.022, -0.022, -0.062], lens = [0.098, 0.108, 0.1, 0.08], rad = [0.029, 0.03, 0.028, 0.025];  // index, middle, ring, pinky (front to back)
+    const zs = [0.064, 0.022, -0.022, -0.062], lens = [0.112, 0.124, 0.115, 0.09], rad = [0.0245, 0.0255, 0.0235, 0.021];  // index, middle, ring, pinky (front to back)
     zs.forEach((z, i) => {
-      const f1 = pivot(hg, -s * 0.012, -0.178, z); f1.add(ell(M.skin, rad[i] * 1.05, rad[i] * 1.05, rad[i] * 1.05, 0, 0, 0, 14));
-      const c1 = new THREE.Mesh(new THREE.CapsuleGeometry(rad[i], lens[i] - rad[i] * 2, 8, 14), M.skin); c1.position.y = -lens[i] / 2; f1.add(c1);
-      const f2 = pivot(f1, 0, -lens[i], 0); f2.add(ell(M.skin, rad[i] * 0.95, rad[i] * 0.95, rad[i] * 0.95, 0, 0, 0, 14));
-      const l2 = lens[i] * 0.78, c2 = new THREE.Mesh(new THREE.CapsuleGeometry(rad[i] * 0.92, l2 - rad[i] * 1.84, 8, 14), M.skin); c2.position.y = -l2 / 2; f2.add(c2);
+      const f1 = pivot(hg, -s * 0.012, -0.178, z); f1.add(ell(M.skin, rad[i] * 0.98, rad[i] * 0.98, rad[i] * 0.98, 0, 0, 0, 14));
+      const c1 = new THREE.Mesh(new THREE.CylinderGeometry(rad[i] * 0.98, rad[i] * 0.86, lens[i], 18), M.skin); c1.position.y = -lens[i] / 2; f1.add(c1);
+      const f2 = pivot(f1, 0, -lens[i], 0); f2.add(ell(M.skin, rad[i] * 0.86, rad[i] * 0.86, rad[i] * 0.86, 0, 0, 0, 16));
+      const l2 = lens[i] * 0.78, c2 = new THREE.Mesh(new THREE.CylinderGeometry(rad[i] * 0.86, rad[i] * 0.6, l2, 18), M.skin); c2.position.y = -l2 / 2; f2.add(c2); f2.add(ell(M.skin, rad[i] * 0.6, rad[i] * 0.62, rad[i] * 0.6, 0, -l2, 0, 14)); f2.add(ell(NAIL, rad[i] * 0.3, rad[i] * 0.45, rad[i] * 0.5, s * rad[i] * 0.52, -l2 * 0.8, 0, 10));
       fingers.push([f1, f2]);
     });
     const th1 = pivot(hg, -s * 0.058, -0.085, 0.075); th1.rotation.x = -0.2; th1.add(ell(M.skin, 0.036, 0.036, 0.036, 0, 0, 0, 14));
-    const t1 = new THREE.Mesh(new THREE.CapsuleGeometry(0.033, 0.05, 8, 14), M.skin); t1.position.y = -0.045; th1.add(t1);
+    const t1 = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.03, 0.095, 18), M.skin); t1.position.y = -0.045; th1.add(t1);
     const th2 = pivot(th1, 0, -0.09, 0); th2.add(ell(M.skin, 0.031, 0.031, 0.031, 0, 0, 0, 14));
-    const t2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.04, 8, 14), M.skin); t2.position.y = -0.04; th2.add(t2);
+    const t2 = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.021, 0.075, 18), M.skin); t2.position.y = -0.04; th2.add(t2); th2.add(ell(M.skin, 0.021, 0.022, 0.021, 0, -0.078, 0, 14));
     // hand-held microphone (visible only when the pose asks for it): handle runs front-to-back through the curled fingers
     const prop = new THREE.Group(); prop.visible = false;
     const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.4, 20), std(0x23222b, { metalness: 0.6, roughness: 0.35 })); handle.rotation.x = Math.PI / 2; prop.add(handle);
@@ -254,6 +256,11 @@ export function buildPerson(opts = {}) {
     root.updateMatrixWorld(true);
     const J = buildJacket(rig, { bones: [chest, arms.L.sh, arms.L.el, arms.R.sh, arms.R.el] }, M, { punk: PUNK, lapels: opts.lapels, rib: !!opts.bowling });
     for (const m of J.meshes) { root.add(m); } root.updateMatrixWorld(true); for (const m of J.meshes) m.bind(J.skeleton); rig.jacket = J;
+    // skinned jeans replace the leg tubes (bend smoothly at the knee, creases, ripped patches)
+    const hideJ = new Set([M.jeans, M.skinD, M.white]); if (M.jeansD) hideJ.add(M.jeansD);
+    for (const k of ['legL', 'legR']) rig.j[k].hip.traverse(o => { if (!o.isMesh) return; if (hideJ.has(o.material) || o.geometry.type === 'TorusGeometry') o.visible = false; });
+    const JJ = buildJeans(rig, M, { hipY: HIPY, kneeY: HIPY - L1, bones: [rig.j.legL.hip, rig.j.legL.knee, rig.j.legR.hip, rig.j.legR.knee], rips: PUNK });
+    for (const m of JJ.meshes) root.add(m); root.updateMatrixWorld(true); for (const m of JJ.meshes) m.bind(JJ.skeleton); rig.jeans = JJ;
   }
   rig.L1 = L1; rig.L2 = L2; rig.root.scale.setScalar(opts.scale ?? 1); rig.M = M;
   return rig;

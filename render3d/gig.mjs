@@ -17,18 +17,21 @@ export function buildGig(opts = {}) {
   // ---- body
   const body = pivot(root, 0, 0, 0); rig.j.body = body;
   const torso = pivot(body, 0, 1.0, 0); torso.add(ell(fur, 0.56, 0.62, 0.46, 0, 0, 0, 36), ell(light, 0.36, 0.44, 0.1, 0, -0.04, 0.38, 24)); rig.j.torso = torso;
-  // fur tufts (instanced) so the silhouette is fuzzy
-  const tuftGeo = new THREE.ConeGeometry(0.006, 0.027, 5); tuftGeo.translate(0, 0.012, 0); tuftGeo.computeVertexNormals();
-  const tufts = (parent, rx, ry, rz, n, cx, cy, cz, skip) => { const im = new THREE.InstancedMesh(tuftGeo, new THREE.MeshStandardMaterial({ color: furC, roughness: 1, flatShading: false }), n), m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0); let k = 0;
-    while (k < n) { const v = new THREE.Vector3(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1); if (v.length() > 1 || v.length() < 0.2) continue; v.normalize(); if (skip && skip(v)) continue;
-      const p = new THREE.Vector3(v.x * rx, v.y * ry, v.z * rz).add(new THREE.Vector3(cx, cy, cz)); const nrm = new THREE.Vector3(v.x / rx, v.y / ry, v.z / rz).normalize(); q.setFromUnitVectors(up, nrm);
-      m.compose(p, q, new THREE.Vector3(0.9 + R() * 0.6, 0.7 + R() * 0.9, 0.9 + R() * 0.6)); im.setMatrixAt(k++, m); } parent.add(im); };
-  tufts(torso, 0.56, 0.62, 0.46, 20000, 0, 0, 0, v => v.z > 0.5 && Math.abs(v.x) < 0.75);
+  // fur: layered shells with a noise alpha map (soft fuzzy silhouette, no spikes); belly stays light via vertex colours
+  const noiseTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, 256, 256); for (let k = 0; k < 4200; k++) { const r = 0.7 + R() * 1.5, a = 0.35 + R() * 0.65; x.fillStyle = `rgba(255,255,255,${a})`; x.beginPath(); x.arc(R() * 256, R() * 256, r, 0, 7); x.fill(); } const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(7, 5); return t; })();
+  const furShells = (parent, rx, ry, rz, n, skipFace, belly) => {
+    const sg = new THREE.SphereGeometry(1, 56, 40), pos = sg.attributes.position, col = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) { const nx = pos.getX(i), ny = pos.getY(i), nz = pos.getZ(i), b = belly && nz > 0.3 && ny < 0.5 && Math.abs(nx) < 0.62 && ny > -0.9; const c = b ? [0.95, 0.93, 0.9] : [0.56, 0.545, 0.6]; col.set(c, i * 3); }
+    sg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    if (skipFace) { const idx = sg.index.array, keep = []; for (let t = 0; t < idx.length; t += 3) { const a = idx[t], b = idx[t + 1], c = idx[t + 2]; const ny = (pos.getY(a) + pos.getY(b) + pos.getY(c)) / 3, nz = (pos.getZ(a) + pos.getZ(b) + pos.getZ(c)) / 3; if (nz > 0.42 && ny < 0.82) continue; keep.push(a, b, c); } sg.setIndex(keep); }
+    for (let k = 1; k <= n; k++) { const t = k / n, off = 1 + 0.07 * t; const m = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ vertexColors: true, color: new THREE.Color().setScalar(0.4 + 0.62 * t), roughness: 1, alphaMap: noiseTex, alphaTest: 0.16 + 0.66 * t })); m.scale.set(rx * off, ry * off, rz * off); parent.add(m); }
+  };
+  furShells(torso, 0.56, 0.62, 0.46, 16, false, true);
 
   // ---- head (neck pivot), ears, mask, muzzle, cap
   const neck = pivot(torso, 0, 0.58, 0.05); rig.j.neck = neck; const head = pivot(neck, 0, 0.55, 0.02); rig.j.head = head;
   head.add(ell(fur, 0.62, 0.52, 0.54, 0, 0, 0, 40));
-  tufts(head, 0.62, 0.52, 0.54, 9000, 0, 0, 0, v => v.z > 0.4 && Math.abs(v.x) < 0.9 && v.y < 0.75);
+  furShells(head, 0.62, 0.52, 0.54, 14, true, false);
   for (const s of [-1, 1]) {
     head.add(ell(fur, 0.17, 0.2, 0.1, s * 0.4, 0.5, -0.05, 20), ell(dark, 0.11, 0.14, 0.06, s * 0.4, 0.5, 0.0, 16), ell(light, 0.04, 0.2, 0.05, s * 0.51, 0.52, -0.03, 10));      // ears
     const m = ell(dark, 0.22, 0.15, 0.11, s * 0.25, 0.08, 0.43, 22); m.rotation.z = -s * 0.35; head.add(m);                                                                 // mask
@@ -50,11 +53,15 @@ export function buildGig(opts = {}) {
   mouthGroup('mouth_open', g => { g.add(ell(dark, 0.1, 0.075, 0.04, 0, -0.26, 0.58, 16), ell(pinkM, 0.06, 0.03, 0.02, 0, -0.29, 0.6, 10)); });
   mouthGroup('mouth_chitter', g => { g.add(ell(dark, 0.14, 0.1, 0.04, 0, -0.27, 0.57, 18), ell(pinkM, 0.08, 0.04, 0.02, 0, -0.31, 0.59, 10), ell(white, 0.03, 0.025, 0.012, -0.05, -0.2, 0.6, 8), ell(white, 0.03, 0.025, 0.012, 0.05, -0.2, 0.6, 8)); });
   mouthGroup('mouth_smile', g => g.add(tube(dark, [[-0.16, -0.19, 0.57], [-0.08, -0.26, 0.6], [0.08, -0.26, 0.6], [0.16, -0.19, 0.57]], 0.009, 12)));
-  // cap (tilted baseball cap with a brim)
-  const cap = pivot(head, 0, 0.1, -0.02); cap.rotation.z = -0.08;
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.6, 32, 20, 0, Math.PI * 2, 0, 1.2), capM); dome.scale.set(1.06, 0.78, 1.0); cap.add(dome);
-  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.5, 0.045, 28, 1, false, -Math.PI / 2 - 1.2, 2.4), capM); brim.scale.z = 1.0; brim.position.set(0, 0.2, 0.36); brim.rotation.x = -0.02; brim.scale.set(1, 1, 0.5); cap.add(brim);
-  cap.add(ell(teal, 0.1, 0.07, 0.02, 0, 0.2, 0.5, 14));
+  // cap: a real baseball cap: panelled crown with seams and button, curved bill, back strap, and rings where the ears come through
+  const cap = pivot(head, 0, 0.1, -0.03); cap.rotation.set(-0.06, 0, -0.06);
+  const capD = std(0xa82a50, { roughness: 0.6 });
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(0.56, 40, 28, 0, Math.PI * 2, 0, 1.38), capM); dome.scale.set(1.06, 0.95, 1.0); cap.add(dome);
+  for (let k = 0; k < 6; k++) { const ph = k * Math.PI / 3, pts = []; for (let t = 0; t <= 12; t++) { const th = 0.02 + t / 12 * 1.34; pts.push([Math.sin(th) * Math.cos(ph) * 0.567 * 1.06, Math.cos(th) * 0.567 * 0.95, Math.sin(th) * Math.sin(ph) * 0.567]); } cap.add(tube(capD, pts, 0.008, 20)); }
+  cap.add(ell(teal, 0.045, 0.035, 0.045, 0, 0.545, 0, 12));
+  const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 0.03, 36, 1, false, -0.95, 1.9), capM); brim.scale.set(1.0, 1, 0.62); brim.position.set(0, 0.14, 0.36); brim.rotation.x = 0.24; cap.add(brim);
+  cap.add(ell(teal, 0.12, 0.05, 0.03, 0, 0.2, 0.55, 14), ell(capD, 0.13, 0.04, 0.05, 0, 0.17, -0.54, 12));
+
 
   // ---- arms (shoulder, elbow, paw with 4 fingers + thumb)
   const arms = {};
@@ -84,7 +91,6 @@ export function buildGig(opts = {}) {
   const tail = pivot(root, 0, 0.78, -0.42); rig.j.tail = tail;
   const curve = new THREE.CatmullRomCurve3([[0, 0, 0], [0, 0.15, -0.3], [0, 0.55, -0.5], [0, 0.95, -0.45], [0, 1.2, -0.25]].map(p => new THREE.Vector3(...p)));
   for (let i = 0; i < 12; i++) { const t = i / 11, p = curve.getPoint(t); const r = 0.2 * (1 - 0.35 * t); const seg = ell(i % 2 ? dark : fur, r, r * 0.8, r * 1.1, p.x, p.y, p.z, 14); const tg = curve.getTangent(t); seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tg); tail.add(seg); }
-  tufts(tail, 0.18, 0.18, 0.18, 0, 0, 0, 0);
   root.traverse(o => { if (o.isMesh || o.isInstancedMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return rig;
 }
