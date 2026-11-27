@@ -315,9 +315,9 @@ HAIRCOL_S = {'a': ((0.20, 0.0, 0.09), (0.95, 0.12, 0.55)), 'b': ((0.0, 0.17, 0.1
 def build_spike(si, p, n, kind):
     topness = max(0.0, n.y)
     d = (n * 1.0 + V3(0, 0.75 + 0.45 * topness, 0) + V3(HR.uniform(-1, 1), HR.uniform(-0.4, 0.4), HR.uniform(-1, 1)) * 0.28).normalized()
-    L = 0.36 + 0.34 * HR.random() ** 1.2 + 0.2 * topness
-    u, v = basis(d); bend = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * HR.uniform(0.08, 0.2) * L
-    Rb = HR.uniform(0.15, 0.2); K = 56; NT = 18; tw = HR.uniform(-0.5, 0.5); ell_ = HR.uniform(1.0, 1.35)
+    L = (0.72 + 0.5 * HR.random() ** 1.2 + 0.4 * topness) * (1 - 0.3 * max(0.0, n.z) * (1 - topness))   # long spikes; shorter right above the forehead
+    u, v = basis(d); bend = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * HR.uniform(0.05, 0.13) * L
+    Rb = HR.uniform(0.17, 0.22); K = 56; NT = 18; tw = HR.uniform(-0.5, 0.5); ell_ = HR.uniform(1.0, 1.35)
     bm2 = bmesh.new(); rings = []; thetas = {}
     for ti in range(NT + 1):
         t = ti / NT; c = p - d * 0.07 + d * (L * t + 0.07) + bend * (t * t)
