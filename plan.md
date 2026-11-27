@@ -1,94 +1,110 @@
-# Plan (for your approval; nothing has been made yet)
+# Plan: Dex Hollow's 30 Days to Showtime (free tools only)
 
-Your "My changes" section was blank, so these are proposals to react to, not decisions. Tell me what to keep, change or drop.
+Status: **Dex is NOT approved yet.** Nothing below happens until you say so. This replaces the earlier Pesto plan.
 
-## 1. Three original character designs
+## 0. Ground rule: free only
 
-None of these shares a species, setting, supporting cast or gag with @kevinthechud. All are designed so the audience can vote on what they do, and none is built on mocking anyone's body.
+No paid plans, no paid credits, nothing that needs a credit card, no free trials that can turn into charges. If something cannot be done free, I say so here and give a manual free option.
 
-### A. Pesto, the pocket dragon (comedy)
-- **Who:** a young adult dragon, about 30 cm tall, teal with a cream belly, round and chunky, with one bent horn.
-- **Art style:** flat, bright 2D vector with thick outlines, easy to animate and very readable on a phone.
-- **Clothes:** an oversized yellow rain slicker with mismatched buttons, because he is always slightly on fire.
-- **Memorable habit:** when nervous he sneezes a perfect smoke ring, and the ring always forms a small shape that fits the situation.
-- **Catchphrase:** "Totally under control!" (said as something smolders in the background).
-- **Personality:** a confident optimist who is a terrible planner.
+Already installed, all free: yt-dlp, FFmpeg, whisper.cpp (speech to text and word timings), Piper text-to-speech with the Kristin voice (public domain), three.js 0.170.0 (3D), Pillow, the Inter font (open license). Nothing used so far needed an account, an API key or a card.
 
-### B. Doris, the detective tortoise (mystery)
-- **Who:** a 140-year-old tortoise.
-- **Art style:** soft, painterly 2D with warm paper textures.
-- **Clothes:** a tiny trench coat tailored around her shell and a monocle she never actually needs.
-- **Memorable habit:** a long, dramatic blink before every conclusion. The viewers' vote appears while she blinks.
-- **Catchphrase:** "Slowly… but certainly."
-- **Personality:** unflappable, dry, and always right three episodes too late.
+## 1. Google Flow free tier: what the official pages say
 
-### C. Bolt, the retired vending-machine robot (heartwarming)
-- **Who:** a boxy 8-year-old robot with a glass front panel where his chest would be.
-- **Art style:** clean 2D with a slight pixel-art edge and glowing colors.
-- **Clothes:** a paper party hat, taped on, for a party that ended years ago.
-- **Memorable habit:** when he is excited he dispenses a random snack from his chest.
-- **Catchphrase:** "Insert choice to continue." This doubles as the voting call to action, which makes it the most reusable line of the three.
-- **Personality:** gentle, earnest, curious about everything outside the machine.
+Source: Google's own Flow help pages (the credits page, the models page, "Where you can use Google Flow"). I read them through a page-reading agent. Google says limits "are subject to change at any time."
 
-**My recommendation: Bolt.** The catchphrase is the vote prompt itself, the snack habit is a built-in visual gag, and a simple robot is the easiest thing for me to animate well in a clean, consistent way.
+| Question | Answer (official) | Confidence |
+|---|---|---|
+| Free allowance | 50 credits a day with no subscription. Unused credits don't roll over. The day's refresh starts at your first generation. | Official |
+| Clips per day | **Veo 3.1 Lite:** 10 credits per clip (4, 6 or 8 s, 720p), so **5 clips a day**. **Omni Flash 1.2:** 3–10 s clips at 360p for 1 credit per second, or 720p for 3 credits per second, so about **5 ten-second clips at 360p or 1 at 720p** a day. | Official |
+| Retries | A bad clip still costs credits. | Follows from the rules |
+| Peak-hour limit | Roughly 2–5 PM UTC (9 AM–12 PM Eastern in winter), free accounts "may not be able to generate videos." | Official |
+| Free features | Text to video, frames to video, "ingredients" (reference images) to video, voice features. Extending clips, 1080p upscaling and 15 s clips are for subscribers. | Official |
+| Age | Flow is "available to users ages 18+." That is the only age statement I found. | Official, but thin |
+| Region | About 190 countries, including the US. | Official |
+| Credit card | No page says the free tier needs one or converts to a charge. The pages do keep pushing "subscribe to a Google AI plan." | Official, absence only |
+| **Watermarks, downloading free videos** | **Not stated on any page I could read.** | Unknown |
+| **Posting on TikTok and monetizing** | **Not stated on any page I could read.** Google's Labs terms page returned a 404. | **Unknown** |
+| Audio in free clips | Not clearly stated. | Unknown |
 
-## 2. Five episode ideas (same format: recap the vote, task, escalating gags, result, vote)
+Two conflicts to be aware of:
 
-Each lists the cold-open hook (spoken in the first 2 seconds) and the closing vote.
+- One Labs FAQ search result says Flow is "exclusively for Google AI Pro and Ultra subscribers," which contradicts the help center's 50 free credits a day. The pages may be out of date. Only you can settle it by opening Flow while signed in and **not** upgrading.
+- One blog says some Veo models retire on December 5, 2026. I couldn't verify that.
 
-1. **Bolt's first day off in 11 years.** Hook: "Bolt has been awake for eleven years. Tonight, you decide what he does with one free hour." Vote: A) learn to skateboard · B) sit in the park · C) visit his old machine friend.
-2. **Pesto's job interview.** Hook: "In ten seconds, the interviewer will notice the intern is on fire." Vote: A) hide in the copier room · B) blame a candle · C) tell the truth.
-3. **Doris and the missing birthday cake.** Hook: "Someone ate the cake. The only witness is a snail with a two-hour alibi." Vote: A) question the snail · B) follow the crumbs · C) check the fridge.
-4. **Pesto becomes mayor of a town of ducks (by accident).** Hook: "Pesto just won an election he never entered." Vote: A) ban puddles · B) build a bread fountain.
-5. **Bolt gets lost in a giant hardware store.** Hook: "Bolt took one wrong aisle. Now he's in aisle 400." Vote: A) follow the arrows · B) ask the forklift · C) climb the shelves.
+My own background knowledge, not checked here: Google says Veo output carries an invisible SynthID mark, and TikTok asks creators to label realistic AI-generated content. I'd confirm both in the official policies before you rely on Flow for monetized posts.
 
-I'd start with idea 1 if you choose Bolt. It has the clearest stakes and the strongest vote.
+**The key gap:** I couldn't find anything that says free-tier videos can be posted and monetized. I won't assume it. The manual check, if you want to use Flow, is to read the terms that appear when you sign in, and look for commercial use in the Google Terms of Service and the Flow help center. I can't do that for you.
 
-## 3. Format upgrades (what makes this better than a copy)
+I also can't sign in to your Google account, and I won't. Any Flow clips would be made by you and sent to me as files.
 
-| Request | What I'll do |
+## 2. Flow free tier vs. free three.js, for one full episode
+
+Assume a 45-second episode of about 25 shots.
+
+| | Google Flow (free) | three.js (free, local) |
+|---|---|---|
+| Look | Closest to the reference style: detailed 3D-like faces, motion and lighting | Simple toy-like 3D. Clean and consistent, but clearly simpler |
+| Clips needed | About 6–9 clips of 5–8 s, plus retries | About 25 shots, rendered by me |
+| Time to finish | **2 days** at the daily limit with zero retries, realistically **3–4 days** | Same day, once the scenes are built |
+| Weekly output | About 350 free credits a week, which is roughly 1 episode a week with retries, borderline for 3 | 3 a week is realistic |
+| Character consistency | Depends on the reference images. Unverified | Guaranteed: it's the same model every time |
+| Resolution | 360p or 720p, so it will look soft on a 1080×1920 canvas | Full 1080×1920 |
+| Control | Prompts only. I can't fix a small mistake | Total: I can fix a caption, a pose or a color |
+| Lip-sync, vote card, comment card | Not possible inside a clip. I'd overlay them | Built in |
+| Who does the work | You: log in, generate daily, download, send me files | Me |
+| Rights to monetize | **Unknown** (see above) | **Yours.** All original and generated here |
+| Account / card | Needs your Google account, 18+ | None |
+
+**My recommendation: stay on the free three.js route for the series.** It's the only option I can show is free, consistent and fully yours. Flow gives a better look, but I can't confirm monetization rights, it costs you daily effort, and its quality is capped at 720p. I'd treat Flow as an optional experiment for one or two hero shots, only if you read its terms first.
+
+## 3. The series (unchanged from your picks)
+
+- **Series:** *Dex Hollow's 30 Days to Showtime.* **Catchphrase:** "It's fine. It's rock 'n' roll!" **Vote prompt:** "Your call, crew."
+- **Cast:** Dex (neon punk, pending your approval), Nana Dot (older relative who forces him to change), Gig the raccoon (van sidekick), Priya (noodle cart owner, always has his order ready), Lena Cho (promoter, appears only as chat messages).
+- **Episode 1: "The soundcheck disaster."** Vote: **BUY** or **BORROW**.
+
+**Draft beat sheet (about 45 s, not a script yet):**
+
+| Time | Beat |
 |---|---|
-| Hook in 1–2 seconds | The first spoken line is a stake or a question, with an action on screen from frame 1 and a cut within about 1.5 s. The reference's longest cold opens run about 6.7 s without a cut, so this is faster. |
-| Open with the winning comment | From episode 2 on, the first 3 seconds show the winning comment as an on-screen card, with a "You picked ___" caption. I use the comment text and like count you send me. I'll blur or shorten handles unless you tell me the commenters said it's fine to show them. |
-| Memorable look, habit, catchphrase | Designed into each character above. |
-| Cut slow moments | Target shot length 1–2 s with a hard cap of 4 s. Target length 35–50 s rather than the reference's 61–76 s, so more viewers reach the vote at the end. |
-| Big, readable captions | 1–3 words at a time, bold, at least 100 px tall on the 1080×1920 canvas, high contrast with an outline, one colored keyword per line, kept clear of the TikTok interface zones at the bottom and right. |
-| Clear choice of 2 or 3 | One-word options with A/B/(C) labels, on screen for the last 5 seconds and said aloud last. Rule shown on screen: "Most likes on a comment wins." Use 2 options by default, 3 when each fits in one word. |
+| 0:00–0:02 | Hook, on screen from frame 1: "Lena just booked Dex for the biggest show of his life. He just realized he sold his guitar." |
+| 0:02–0:08 | Lena's chat: "Show's in 30 days. Don't blow it." Dex: "It's fine. It's rock 'n' roll!" |
+| 0:08–0:30 | Escalating gags in the van with Gig and Nana Dot, each shot 1–2 s, hard cap 4 s |
+| 0:30–0:38 | Priya hands over his order without being asked. A small stakes beat |
+| 0:38–0:45 | Vote card: **BUY or BORROW**, "Your call, crew." Said aloud last |
 
-### Rules I suggest for the vote (you can change them)
-- You send me the top comments with their like counts; I pick the winner by your counts only. I can't read TikTok comments myself.
-- Ties: the option that arrived first wins.
-- No clear winner or no comments: I use the most-liked comment, and you tell me if you'd rather decide yourself.
-- I only quote a vote count if you give me one. I won't invent numbers.
+From episode 2 on, the first 3 seconds show the winning comment as a card ("You picked BORROW").
 
-## 4. Posting schedule you can keep
+**Posting schedule:** Monday, Wednesday, Friday at 6:00 pm Eastern. You post manually. Vote window is about 24–48 hours.
 
-The reference account posts about daily, which is hard to sustain when each episode depends on the previous vote. I suggest **3 episodes a week: Monday, Wednesday and Friday at the same time (your local early evening)**:
+## 4. Free-only workflow, with manual fallbacks
 
-- Day of posting: you publish and pin a comment repeating the two or three options.
-- 24 hours later: you send me the top comments and their like counts.
-- Next day: I write the script and shot list for your approval; you approve and I render.
-- The following posting day: the next episode goes up.
-
-That gives a vote window of about 48 hours, a fixed rhythm viewers can learn, and a buffer if you're busy. If it starts to feel heavy, drop to Monday and Thursday. Consistency matters more than frequency. Tell me your time zone and when your viewers are most active and I'll fix the exact time.
-
-## 5. Tools (free first)
-
-| Need | Free option | Paid / optional | Can I do it myself here? |
+| Task | Free method | Can I do it fully? | Manual fallback |
 |---|---|---|---|
-| Visuals | I draw and animate the characters in code (vector shapes in a browser canvas, rendered to frames with the Chromium already installed here), or you draw them in Krita, Inkscape or Blender | AI image and video generators (Midjourney, Runway, Kling and similar), roughly $10–$100 per month | **Partly.** I can build simple, consistent 2D animation locally. I cannot generate photoreal or 3D-rendered images or video myself. |
-| Voice | Your own voice (best: nothing to disclose or license). Or an open-source offline voice such as Piper or Kokoro. | A paid voice service such as ElevenLabs | **No.** I can't generate a voice myself. Offline voices need installing (I will ask first). |
-| Music | Free libraries whose licenses allow monetized use (for example the YouTube Audio Library, or Pixabay and Freesound under CC0). I'd confirm each license with you. | A paid library such as Epidemic Sound or Artlist | **Not really.** I can't compose recognizable songs. I can make simple original loops with synthesis, or place music you choose. |
-| Sound effects | Freesound (CC0 only) or sounds I synthesize | – | Partly (simple whooshes and pops). |
-| Captions | Whisper (installed) gives word timings, then I render the captions | – | **Yes.** |
-| Editing, 1080×1920 export | FFmpeg (installed) | – | **Yes.** |
+| Characters and scenes | three.js, rendered locally | Yes | None needed |
+| Voice | Piper (Kristin, public domain) with pitch and tone tuned per character, or your own voice | Yes for text-to-speech | **Record your own voice** and send me the file |
+| Music | An original loop I synthesize with code (zero license risk, but basic). Or free music added by you in the TikTok app at upload | Partly | **Add a track from TikTok's own free music library** when you post. I'd check the current rules for your account type |
+| Sound effects | Simple ones I synthesize, or CC0 only from Freesound | Partly | You add a sound in TikTok |
+| Captions | whisper.cpp for word timing, rendered by me | Yes | None needed |
+| Editing, 1080×1920 export | FFmpeg | Yes | None needed |
+| **Reading comments** | **I can't read TikTok comments for free.** The official API needs an approved app, and I won't use your login or cookies | No | **You send screenshots or paste the top comments with like counts.** I read screenshots. This is the vote source |
+| **Posting** | **I can't post for you.** TikTok's API needs approval | No | **You upload in TikTok Studio** and can schedule there. I'd check the current scheduling rules for your account type |
+| Labeling AI content | n/a | n/a | You apply TikTok's AI-content label if required. Check TikTok's current policy |
 
-Total cost on the default path: **$0.** Anything paid needs your OK first.
+## 5. Steps and approval gates
+
+1. **Dex approval (waiting on you).** You can approve him, ask for changes, or ask me to improve the hair and face first.
+2. Design Nana Dot, Gig and Priya in the same 3D style. Show stills. Wait for approval.
+3. 5-second test with voice (Piper), captions and one vote card. Show it. Wait for approval.
+4. Script and shot list for Episode 1. Show it before I render.
+5. Render the 1080×1920 episode, watch it back with the video skill, fix problems, show you.
+6. You post it, then send me comment screenshots, and I write Episode 2.
+
+Nothing in these steps costs money or needs an account.
 
 ## 6. What I need from you
 
-1. Which character (or a mix), and any changes to look, clothes, personality or catchphrase.
-2. Setting, voice (your own, or a text-to-speech voice) and what music mood you want.
-3. Which episode idea for the first video.
-4. How the reference account sounds to you (music, voice tone, sound effects). I couldn't judge those from the files.
-5. Whether you're OK with the choice of 2 vs 3 options as described, and your time zone.
+1. Are you 18+ and do you want to try Flow at all? (Not required: the series works without it.)
+2. Approve Dex, or tell me what to change.
+3. Voice: my text-to-speech, or your own recorded voice?
+4. Music: an original loop from me, or you add a track in the TikTok app?
