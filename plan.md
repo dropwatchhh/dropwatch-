@@ -61,18 +61,7 @@ Assume a **60–70 second episode** (hard minimum 60.0 s) of about 35 shots.
 
 - **Series:** *Dex Hollow's 30 Days to Showtime.* **Catchphrase:** "It's fine. It's rock 'n' roll!" **Vote prompt:** "Your call, crew."
 - **Cast:** Dex (neon punk, pending your approval), Nana Dot (older relative who forces him to change), Gig the raccoon (van sidekick), Priya (noodle cart owner, always has his order ready), Lena Cho (promoter, appears only as chat messages).
-- **Episode 1: "The soundcheck disaster."** Vote: **BUY** or **BORROW**.
-
-**Draft beat sheet (target 64 s, never under 60.0 s; not a script yet):**
-
-| Time | Beat |
-|---|---|
-| 0:00–0:02 | Hook, on screen from frame 1: "Lena just booked Dex for the biggest show of his life. He just realized he sold his guitar." |
-| 0:02–0:10 | Lena's chat: "Show's in 30 days. Don't blow it." Dex: "It's fine. It's rock 'n' roll!" |
-| 0:10–0:26 | Gag run 1 in the van with Gig: the missing guitar search, each shot 1–2 s |
-| 0:26–0:42 | Gag run 2: Nana Dot arrives with house rules and a bill. Escalation |
-| 0:42–0:54 | Priya hands over his order without being asked. A small stakes beat, then the realization |
-| 0:54–0:64 | Vote card: **BUY or BORROW**, "Your call, crew." Said aloud last, on screen for the final 6 seconds |
+- **Episode 1: "Live and Rolling."** Dex brags on a livestream that he can play through anything while his van, with his only guitar inside, rolls away with Gig at the wheel. Lena joins the stream and the van heads for Nana Dot's flower stand. Vote: **CHASE** or **PLAY**. Full script and shot plan: `episode1_script.md` (awaiting your approval).
 
 From episode 2 on, the first 3 seconds show the winning comment as a card ("You picked BORROW").
 
@@ -90,7 +79,7 @@ From episode 2 on, the first 3 seconds show the winning comment as a card ("You 
 
 I only work when you message me in this session. I can't act between your messages, so the times above are your deadlines to send things, not times I run on my own.
 
-**Length rule: every episode is at least 60 seconds.** I'll target 62–70 s so there is a safety margin, and I'll check the finished file's duration with ffprobe before showing it to you. A 60+ second episode means about 140–170 spoken words, roughly 35 shots, and about 1,800 frames. At the measured ~2 s per frame that is **about 60 minutes of rendering**, so I will render shot by shot and re-render only a shot that needs a fix, not the whole episode. If time gets tight, I can render on twos (every other frame, about 30 minutes) or at 24 fps (about 48 minutes).
+**Length rule: every episode is at least 60 seconds.** I'll target 62–70 s so there is a safety margin, and I'll check the finished file's duration with ffprobe before showing it to you. A 60+ second episode means roughly 35 shots and about 1,800–2,100 frames at 30 fps (spoken words vary with how action-led it is; Episode 1 has about 105). At the measured ~2 s per frame that is **about 60 minutes of rendering**, so I will render shot by shot and re-render only a shot that needs a fix, not the whole episode. If time gets tight, I can render on twos (every other frame, about 30 minutes) or at 24 fps (about 48 minutes).
 
 **How far ahead we need to work:** the toolkit (final Dex, Nana Dot, Gig, Priya, the van and stage sets, caption and vote-card templates, voice and music) must be finished **before Day 1**, plus **3 banked fallback episodes** that don't depend on a vote (for example "Gig's van tour", "Nana Dot's rules"). A vote-dependent episode can only be made about 18 hours ahead, so the bank is what covers a missed deadline. If the screenshots arrive after 10:00 PM, or an approval is late, you post a banked episode and the vote carries over to the next day.
 
@@ -127,3 +116,22 @@ Nothing in these steps costs money or needs an account.
 2. Approve Dex, or tell me what to change.
 3. Voice: my text-to-speech, or your own recorded voice?
 4. Music: an original loop from me, or you add a track in the TikTok app?
+
+## 7. Blender test result (free Blender 5.3.0, CPU only)
+
+Installed from the official tarball (407 MB download, **1.3 GB unpacked**, checksum verified, in `/home/user/tools/blender`). The still is `design/dex_blender/dex_still_1080x1920.png`; the script is `blender/dex_portrait.py`.
+
+| Measured on this machine (4 CPU cores, no GPU), 1080×1920, one head-and-bust scene | Time |
+|---|---|
+| Hero still, 96 samples + denoise | **275 s** |
+| Animation-quality frame, 32 samples + denoise | **102 s** |
+| Fast real-time engine (EEVEE) | **Does not run** (no EGL/Vulkan on this machine) |
+
+| 62–70 s episode at 102 s per frame | Frames | Render time |
+|---|---|---|
+| 30 fps | 1,860–2,100 | 53–60 hours |
+| 24 fps | 1,488–1,680 | 42–48 hours |
+| 15 fps (every other frame) | 930–1,050 | 26–30 hours |
+| 12 fps | 744–840 | 21–24 hours |
+
+The daily window for rendering is about 2 hours. **Blender animation cannot meet a daily 2 PM schedule on this machine**, even at 12 fps, and a full scene with a van, street and several characters would be slower than this head-and-bust test (my estimate: 1.5–3×; not measured). three.js renders about 2 s per frame, so a 62–70 s episode takes about 1 hour.
