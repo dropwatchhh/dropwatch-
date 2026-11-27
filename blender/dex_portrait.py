@@ -10,6 +10,9 @@ OUT = argv[0] if len(argv) > 0 else '/tmp/dex.png'
 SAMPLES = int(argv[1]) if len(argv) > 1 else 32
 PCT = int(argv[2]) if len(argv) > 2 else 50
 EXPR = argv[3] if len(argv) > 3 else 'smile'
+YAW = float(argv[4]) if len(argv) > 4 else 0.0
+CAMX = float(argv[5]) if len(argv) > 5 else 0.9
+CAMD = float(argv[6]) if len(argv) > 6 else 6.2
 
 D = math.pi / 180
 R = random.Random(7)
@@ -184,6 +187,17 @@ def H(x, y):
     return h
 def surfZ(x, y): return faceZ0(x, y) + H(x, y)
 
+# natural hairline: height of the hairline for each azimuth a (0 = front, +-pi/2 = ears, pi = nape)
+HLPTS = [(0, 2.80), (30, 2.78), (50, 2.72), (64, 2.62), (78, 2.52), (92, 2.42), (112, 2.24), (140, 2.08), (180, 2.0)]
+def hairline_y(a):
+    d = abs(math.degrees(a)); y = HLPTS[-1][1]
+    for (d0, y0), (d1, y1) in zip(HLPTS, HLPTS[1:]):
+        if d <= d1: y = lerp(y0, y1, s01((d - d0) / (d1 - d0))); break
+    return y + 0.012 * math.sin(a * 9) + 0.008 * math.sin(a * 17 + 1)
+def head_pt(a, y):
+    uy = (y - 2.38) / 0.58; r = math.sqrt(max(0.0, 1 - uy * uy)); kk = kOf(y)
+    p = V3(0.6 * kk * r * math.sin(a), y, 0.56 * zf(uy) * r * math.cos(a)); n = V3(p.x / 0.36, (p.y - 2.38) / 0.34, p.z / 0.31).normalized(); return p, n
+
 bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=176, v_segments=120, radius=1.0)
 for v in bm.verts:
     a, bb, c = v.co; ux, uy, uz = a, c, -bb
@@ -199,7 +213,7 @@ md = head.modifiers.new('sub', 'SUBSURF'); md.levels = 1; md.render_levels = 1
 bm2 = bmesh.new(); bm2.from_mesh(head_me); keep = []
 for f in bm2.faces:
     c = f.calc_center_median(); x3, y3, z3 = c.x, c.z, -c.y
-    if y3 > 2.3 and not (z3 > 0.2 and y3 < 2.8): keep.append(f)
+    if y3 > hairline_y(math.atan2(x3, z3)) + 0.03: keep.append(f)
 bmesh.ops.delete(bm2, geom=[f for f in bm2.faces if f not in keep], context='FACES')
 for v in bm2.verts:
     x3, y3, z3 = v.co.x, v.co.z, -v.co.y; n = Vector((x3 / 0.36, (y3 - 2.38) / 0.34, z3 / 0.31)).normalized(); v.co += Vector(P(*(n * 0.007)))
@@ -314,60 +328,70 @@ def brows(e):
         curve_obj('brow%d' % i, spl, 0.0024, m_brow, 'BEZIER', 2)
 brows(E)
 
-# ------------------------------------------------------------------ hair: strand clumps (teal / magenta mohawk)
-CAPC, CAPS, CAPROT = V3(0, 2.47, -0.05), V3(0.66, 0.64, 0.62), -0.4
-def capPt(theta, phi):
-    p = V3(math.sin(theta) * math.sin(phi) * CAPS.x, math.cos(theta) * CAPS.y, math.sin(theta) * math.cos(phi) * CAPS.z)
-    c, s_ = math.cos(CAPROT), math.sin(CAPROT)
-    return V3(p.x, p.y * c - p.z * s_, p.y * s_ + p.z * c) + CAPC
-strands = {'a': [], 'b': []}
+# ------------------------------------------------------------------ hair: messy spiky locks all over the head
+# Each spike is a lock of 25-35 fine strands that twist around each other and converge to a feathered tip;
+# plus a dense short under-layer, feathered baby hairs along a natural hairline, and a few flyaways.
+HR = random.Random(11)
+strands = {'a': [], 'b': []}      # long strand splines (spike locks)
+under = {'a': [], 'b': []}
+baby = {'a': [], 'b': []}
+fly = {'a': [], 'b': []}
 def basis(d):
     up = V3(0, 1, 0) if abs(d.y) < 0.9 else V3(1, 0, 0); u = d.cross(up).normalized(); return u, d.cross(u).normalized()
-def curve_pts(P0, d, sv, l):
-    return [P0 - d * 0.07, P0 + d * (0.3 * l) + sv * (0.03 * l), P0 + d * (0.65 * l) + sv * (0.2 * l), P0 + d * l + sv * (0.55 * l)]
-def clump(base, dir_, ln, rad, kind, sweep, n=16, wob=0.3):
-    d, sv = dir_.normalized(), sweep.normalized(); u, v = basis(d)
-    strands[kind].append(([tuple(p) for p in curve_pts(base, d, sv, ln)], [1.0, 0.9, 0.55, 0.12], rad * 0.8))
-    for _ in range(n):
-        ang, rr = R.random() * 6.283, rad * math.sqrt(R.random()); off = u * (math.cos(ang) * rr) + v * (math.sin(ang) * rr); l = ln * (0.8 + 0.34 * R.random())
-        pts = curve_pts(base, d, sv, l); pts = [p + off * f + (V3(R.random() - .5, R.random() - .5, R.random() - .5) * (wob * ln * 0.2 * (1 if i > 1 else 0.2))) for i, (p, f) in enumerate(zip(pts, [1, .95, .6, .12]))]
-        k = kind if R.random() > 0.22 else ('b' if kind == 'a' else 'a')
-        strands[k].append(([tuple(p) for p in pts], [1.0, 0.85, 0.5, 0.1], 0.0125 + 0.009 * R.random()))
-flip = 0
-for k in range(12):
-    sPar = -1 + 2 * k / 11; theta = -sPar * 0.9 if sPar < 0 else sPar * 1.25; phi = 0 if sPar < 0 else math.pi; prof = math.sin(math.pi * (0.06 + 0.88 * k / 11))
-    for lane in (-0.14, 0, 0.14):
-        B0 = capPt(theta, phi); B = V3(lane, B0.y - abs(lane) * 0.1, B0.z); n = (B - CAPC).normalized()
-        dir_ = (n * 0.8 + V3(lane * 1.8, 0.9, 0)).normalized()
-        sw = V3(lane * 2 + (R.random() - .5), 0.25, 1) if sPar < -0.15 else (V3(lane * 2 + (R.random() - .5), -0.15, -1) if sPar > 0.25 else V3(lane * 3 + (R.random() - .5) * 2, 0, -0.45))
-        ln = (0.28 + 0.62 * prof ** 0.9) * (1 if lane == 0 else 0.84) * (0.9 + 0.2 * R.random())
-        clump(B, dir_, ln, 0.085 + 0.02 * R.random(), 'a' if flip % 2 else 'b', sw, 16); flip += 1
-for sg in (-1, 1):
-    for k in range(7):
-        B = capPt(0.95 + 0.4 * R.random(), sg * (0.9 + 1.2 * R.random())); n = (B - CAPC).normalized()
-        clump(B, n + V3(sg * 0.5, 0.25, 0), 0.3 + 0.28 * R.random(), 0.06, 'a' if flip % 2 else 'b', V3(sg * 0.7, -0.35, -0.4), 14); flip += 1
-for k in range(7):
-    ph = -0.8 + 1.6 * k / 6; B = capPt(0.98 + 0.05 * R.random(), ph); n = (B - CAPC).normalized()
-    clump(B, n + V3(0, -0.15, 0.55), 0.24 + 0.14 * R.random(), 0.045, 'a' if flip % 2 else 'b', V3(math.copysign(0.6, ph), -0.1, 0.25), 12, 0.2); flip += 1
-short = {'a': [], 'b': []}
-for _ in range(900):
-    phi = (R.random() - 0.5) * 2.8; theta = 0.7 + 0.52 * R.random(); B = capPt(theta, phi); n = (B - CAPC).normalized(); l = 0.09 + 0.12 * R.random()
-    short['a' if R.random() < 0.5 else 'b'].append(([tuple(B - n * 0.04), tuple(B + n * l * 0.5 + V3(0, 0.02, 0.02)), tuple(B + n * l + V3(math.copysign(0.02, phi), 0.03, -0.03))], [1.0, 0.7, 0.2]))
-for _ in range(2200):
-    a = R.random() * 6.283; y = 2.3 + 0.68 * R.random(); uy = (y - 2.38) / 0.58
-    if abs(uy) >= 0.98: continue
-    r = math.sqrt(1 - uy * uy); kk = kOf(y); Pp = V3(0.6 * kk * r * math.sin(a), y, 0.56 * r * math.cos(a))
-    if math.cos(a) > 0.1 and y < 2.8: continue
-    if abs(math.sin(a)) > 0.8 and 2.2 < y < 2.52: continue
-    n = V3(Pp.x / 0.36, (Pp.y - 2.38) / 0.34, Pp.z / 0.31).normalized(); l = 0.09 + 0.1 * R.random()
-    short['a' if R.random() < 0.5 else 'b'].append(([tuple(Pp - n * 0.03), tuple(Pp + n * l * 0.5 + V3(0, -0.015, -0.01)), tuple(Pp + n * l + V3(0, -0.04, -0.03))], [1.0, 0.7, 0.2]))
+def kind_at(p): return 'a' if (math.sin(5.0 * p.x + 3.0 * p.y) + math.sin(4.0 * p.z - 2.0 * p.y + 1.0)) > 0 else 'b'
+# scalp sample points, uniform over the area above the hairline (uniform in azimuth and height)
+def scalp_sample(extra=0.0):
+    while True:
+        a_ = HR.uniform(-math.pi, math.pi); y = HR.uniform(1.97, 2.955)
+        if y > hairline_y(a_) + extra: return a_, y
+# spike bases by rejection (Poisson-like spacing) so spikes cover the whole head
+spikes = []
+tries = 0
+while len(spikes) < 72 and tries < 30000:
+    tries += 1; a_, y = scalp_sample(0.10); p, n = head_pt(a_, y)
+    if all((p - q[0]).length > 0.185 for q in spikes): spikes.append((p, n, a_, y))
+for si, (p, n, a_, y) in enumerate(spikes):
+    topness = max(0.0, n.y)
+    d = (n * 1.0 + V3(0, 0.55 + 0.3 * topness, 0) + V3(HR.uniform(-1, 1), HR.uniform(-0.6, 0.6), HR.uniform(-1, 1)) * 0.55).normalized()
+    L = 0.28 + 0.4 * HR.random() ** 1.3 + 0.2 * topness
+    u, v = basis(d); bend = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * HR.uniform(0.15, 0.42) * L
+    rad = HR.uniform(0.085, 0.135); kind = 'a' if HR.random() < 0.5 else 'b'
+    n_str = HR.randint(36, 48); omega = HR.choice((-1, 1)) * HR.uniform(1.2, 3.0)
+    for k in range(n_str):
+        rho = rad * math.sqrt(HR.random()); ph0 = HR.random() * 6.283; lk = HR.uniform(0.76, 1.0)
+        pts, wts = [], []
+        for ti in range(7):
+            t = ti / 6.0; tl = t * lk
+            off = u * (math.cos(ph0 + omega * t) * rho * (1 - t ** 1.25)) + v * (math.sin(ph0 + omega * t) * rho * (1 - t ** 1.25))
+            jit = V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * (0.012 * L * t)
+            pos = p - d * 0.05 + d * (L * tl + 0.05) + bend * (tl * tl) + V3(0, -0.07 * L * tl ** 3, 0) + off + jit
+            pts.append(tuple(pos)); wts.append(max(0.07, (1 - t) ** 0.85))
+        kk = kind if HR.random() > 0.2 else ('b' if kind == 'a' else 'a')
+        strands[kk].append((pts, wts))
+for _ in range(4800):
+    a_, y = scalp_sample(0.0); p, n = head_pt(a_, y); l = HR.uniform(0.05, 0.12)
+    dd = (n + V3(0, 0.45, 0) + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.3).normalized()
+    pts = [tuple(p - n * 0.03), tuple(p + dd * l * 0.5), tuple(p + dd * l + V3(0, -0.01, 0))]
+    under[kind_at(p)].append((pts, [1.0, 0.75, 0.15]))
+for _ in range(2600):  # feathered baby hairs along the hairline, densest right at the edge, lying nearly flat
+    a_ = HR.uniform(-math.pi * 0.97, math.pi * 0.97); dist = HR.expovariate(1 / 0.03)
+    if dist > 0.12: continue
+    y = hairline_y(a_) + dist; p, n = head_pt(a_, y); l = HR.uniform(0.03, 0.065)
+    dd = (n * 0.3 + V3(0, 0.6, 0) + V3(HR.uniform(-1, 1), 0, HR.uniform(-1, 1)) * 0.25).normalized()
+    pts = [tuple(p - n * 0.01), tuple(p + dd * l * 0.5 + n * 0.006), tuple(p + dd * l + n * 0.004)]
+    baby[kind_at(p)].append((pts, [1.0, 0.7, 0.2]))
+for _ in range(150):  # flyaways
+    a_, y = scalp_sample(0.12); p, n = head_pt(a_, y); l = HR.uniform(0.35, 0.7)
+    dd = (n + V3(0, 0.5, 0) + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.5).normalized(); u, v = basis(dd); curl = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * 0.25 * l
+    pts = [tuple(p + dd * (l * t) + curl * (t * t) + V3(0, -0.05 * l * t ** 3, 0)) for t in (0, 0.25, 0.5, 0.75, 1.0)]
+    fly[kind_at(p)].append((pts, [1.0, 0.85, 0.6, 0.35, 0.1]))
 for kind, mat in (('a', m_pink), ('b', m_teal)):
-    long_ = strands[kind]
-    # one curve object per strand radius class keeps bevel simple: use point radius as the taper, bevel_depth = typical base radius
-    cu_thin = [(p, r) for p, r, rad in long_ if rad < 0.03]; cu_core = [(p, [x * 1.0 for x in r]) for p, r, rad in long_ if rad >= 0.03]
-    curve_obj('hairThin' + kind, cu_thin, 0.011, mat, 'BEZIER', 3)
-    curve_obj('hairCore' + kind, cu_core, 0.042, mat, 'BEZIER', 3)
-    curve_obj('hairShort' + kind, short[kind], 0.0105, mat, 'POLY', 1)
+    curve_obj('locks' + kind, strands[kind], 0.0085, mat, 'BEZIER', 3)
+    curve_obj('under' + kind, under[kind], 0.0085, mat, 'POLY', 1)
+    curve_obj('baby' + kind, baby[kind], 0.0042, mat, 'POLY', 1)
+    curve_obj('fly' + kind, fly[kind], 0.0042, mat, 'BEZIER', 2)
+for ob in scene.objects:
+    if ob.type == 'CURVE' and (ob.name.startswith(('locks', 'under', 'baby', 'fly'))): ob.data.bevel_resolution = 2
 
 # ------------------------------------------------------------------ body: neck, tee, jacket, collar, lapels, shoulders
 def lathe(profile, segs, phi0, phiL, zs, y0, ys=1.0, closed_front=False):
@@ -444,12 +468,17 @@ light('top', (0.0, -1.0, 6.5), 120, (0.8, 0.8, 1.0), 2.5)
 cam = bpy.data.cameras.new('cam'); cam.lens = 85; cam.sensor_width = 36; cam.sensor_height = 36; cam.sensor_fit = 'VERTICAL'
 cam.dof.use_dof = True; cam.dof.focus_object = tgt; cam.dof.aperture_fstop = 4.0
 co = bpy.data.objects.new('cam', cam); scene.collection.objects.link(co); scene.camera = co
-co.location = P(0.9, 2.45, 6.2); cc = co.constraints.new('TRACK_TO'); cc.target = tgt; cc.track_axis = 'TRACK_NEGATIVE_Z'; cc.up_axis = 'UP_Y'
+co.location = P(CAMX, 2.45, CAMD); cc = co.constraints.new('TRACK_TO'); cc.target = tgt; cc.track_axis = 'TRACK_NEGATIVE_Z'; cc.up_axis = 'UP_Y'
 cam.sensor_width = 36
 
 # world
 w = bpy.data.worlds.new('w'); w.use_nodes = True; w.node_tree.nodes['Background'].inputs['Color'].default_value = (0.01, 0.006, 0.02, 1); w.node_tree.nodes['Background'].inputs['Strength'].default_value = 1.0
 scene.world = w
+
+turn = bpy.data.objects.new('turn', None); scene.collection.objects.link(turn)
+for ob in list(scene.objects):
+    if ob.type in {'MESH', 'CURVE'} and ob.parent is None and not ob.name.startswith(('backdrop', 'bokeh', 'turn')): ob.parent = turn
+turn.rotation_euler = (0, 0, YAW * D)
 
 # render settings
 sc = scene; sc.render.engine = 'CYCLES'; cy = sc.cycles; cy.device = 'CPU'; cy.samples = SAMPLES; cy.use_adaptive_sampling = True; cy.adaptive_threshold = 0.02
