@@ -39,12 +39,12 @@ I also can't sign in to your Google account, and I won't. Any Flow clips would b
 
 ## 2. Flow free tier vs. free three.js, for one full episode
 
-Assume a 45-second episode of about 25 shots.
+Assume a **60–70 second episode** (hard minimum 60.0 s) of about 35 shots.
 
 | | Google Flow (free) | three.js (free, local) |
 |---|---|---|
 | Look | Closest to the reference style: detailed 3D-like faces, motion and lighting | Simple toy-like 3D. Clean and consistent, but clearly simpler |
-| Clips needed | About 6–9 clips of 5–8 s, plus retries | About 25 shots, rendered by me |
+| Clips needed | About 6–9 clips of 5–8 s, plus retries | About 35 shots, rendered by me, one shot at a time |
 | Time to finish | **2 days** at the daily limit with zero retries, realistically **3–4 days** | Same day, once the scenes are built |
 | Weekly output | About 350 free credits a week, which is roughly 1 episode a week with retries, borderline for 3 | 3 a week is realistic |
 | Character consistency | Depends on the reference images. Unverified | Guaranteed: it's the same model every time |
@@ -63,15 +63,16 @@ Assume a 45-second episode of about 25 shots.
 - **Cast:** Dex (neon punk, pending your approval), Nana Dot (older relative who forces him to change), Gig the raccoon (van sidekick), Priya (noodle cart owner, always has his order ready), Lena Cho (promoter, appears only as chat messages).
 - **Episode 1: "The soundcheck disaster."** Vote: **BUY** or **BORROW**.
 
-**Draft beat sheet (about 45 s, not a script yet):**
+**Draft beat sheet (target 64 s, never under 60.0 s; not a script yet):**
 
 | Time | Beat |
 |---|---|
 | 0:00–0:02 | Hook, on screen from frame 1: "Lena just booked Dex for the biggest show of his life. He just realized he sold his guitar." |
-| 0:02–0:08 | Lena's chat: "Show's in 30 days. Don't blow it." Dex: "It's fine. It's rock 'n' roll!" |
-| 0:08–0:30 | Escalating gags in the van with Gig and Nana Dot, each shot 1–2 s, hard cap 4 s |
-| 0:30–0:38 | Priya hands over his order without being asked. A small stakes beat |
-| 0:38–0:45 | Vote card: **BUY or BORROW**, "Your call, crew." Said aloud last |
+| 0:02–0:10 | Lena's chat: "Show's in 30 days. Don't blow it." Dex: "It's fine. It's rock 'n' roll!" |
+| 0:10–0:26 | Gag run 1 in the van with Gig: the missing guitar search, each shot 1–2 s |
+| 0:26–0:42 | Gag run 2: Nana Dot arrives with house rules and a bill. Escalation |
+| 0:42–0:54 | Priya hands over his order without being asked. A small stakes beat, then the realization |
+| 0:54–0:64 | Vote card: **BUY or BORROW**, "Your call, crew." Said aloud last, on screen for the final 6 seconds |
 
 From episode 2 on, the first 3 seconds show the winning comment as a card ("You picked BORROW").
 
@@ -88,6 +89,8 @@ From episode 2 on, the first 3 seconds show the winning comment as a card ("You 
 | Day D+1, **by 1:00 PM** | You schedule or upload it in TikTok Studio for 2:00 PM. This leaves a one-hour safety margin. |
 
 I only work when you message me in this session. I can't act between your messages, so the times above are your deadlines to send things, not times I run on my own.
+
+**Length rule: every episode is at least 60 seconds.** I'll target 62–70 s so there is a safety margin, and I'll check the finished file's duration with ffprobe before showing it to you. A 60+ second episode means about 140–170 spoken words, roughly 35 shots, and about 1,800 frames. At the measured ~2 s per frame that is **about 60 minutes of rendering**, so I will render shot by shot and re-render only a shot that needs a fix, not the whole episode. If time gets tight, I can render on twos (every other frame, about 30 minutes) or at 24 fps (about 48 minutes).
 
 **How far ahead we need to work:** the toolkit (final Dex, Nana Dot, Gig, Priya, the van and stage sets, caption and vote-card templates, voice and music) must be finished **before Day 1**, plus **3 banked fallback episodes** that don't depend on a vote (for example "Gig's van tour", "Nana Dot's rules"). A vote-dependent episode can only be made about 18 hours ahead, so the bank is what covers a missed deadline. If the screenshots arrive after 10:00 PM, or an approval is late, you post a banked episode and the vote carries over to the next day.
 
