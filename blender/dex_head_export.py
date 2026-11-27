@@ -304,47 +304,59 @@ def scalp_sample(extra=0.0):
     while True:
         a_ = HR.uniform(-math.pi, math.pi); y = HR.uniform(1.97, 2.955)
         if y > hairline_y(a_) + extra: return a_, y
-# ---- thick gel-styled spikes: fewer, chunky, wide base, solid volume, sharp tips, ridged surface (strand texture)
+# ---- thick gel-styled hair spikes: each spike is a tight bundle of ~100 chunky strands that converge to a point,
+# over a solid core (so no see-through gaps), rooted well behind the hairline and pointing up/back (not forward over the brows)
 spikes = []
 tries = 0
-while len(spikes) < 44 and tries < 40000:
+def front_ok(a_, y):
+    return abs(a_) > 1.15 or y > hairline_y(a_) + 0.30
+while len(spikes) < 40 and tries < 60000:
     tries += 1; a_, y = scalp_sample(0.07); p, n = head_pt(a_, y)
-    if all((p - q[0]).length > 0.235 for q in spikes): spikes.append((p, n, a_, y))
+    if not front_ok(a_, y): continue
+    if all((p - q[0]).length > 0.25 for q in spikes): spikes.append((p, n, a_, y))
 spike_objs = []
 HAIRCOL_S = {'a': ((0.20, 0.0, 0.09), (0.95, 0.12, 0.55)), 'b': ((0.0, 0.17, 0.16), (0.12, 0.85, 0.74))}
-def build_spike(si, p, n, kind):
-    topness = max(0.0, n.y)
-    d = (n * 1.0 + V3(0, 0.75 + 0.45 * topness, 0) + V3(HR.uniform(-1, 1), HR.uniform(-0.4, 0.4), HR.uniform(-1, 1)) * 0.28).normalized()
-    L = (0.72 + 0.5 * HR.random() ** 1.2 + 0.4 * topness) * (1 - 0.3 * max(0.0, n.z) * (1 - topness))   # long spikes; shorter right above the forehead
-    u, v = basis(d); bend = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * HR.uniform(0.05, 0.13) * L
-    Rb = HR.uniform(0.17, 0.22); K = 56; NT = 18; tw = HR.uniform(-0.5, 0.5); ell_ = HR.uniform(1.0, 1.35)
-    bm2 = bmesh.new(); rings = []; thetas = {}
+def build_core(si, p, d, L, bend, Rb, kind):
+    K = 20; NT = 12; u, v = basis(d); bm2 = bmesh.new(); rings = []
     for ti in range(NT + 1):
-        t = ti / NT; c = p - d * 0.07 + d * (L * t + 0.07) + bend * (t * t)
-        r = Rb * (1 - t) ** 0.78 * (1 + 0.5 * math.exp(-t * 8.0)); ring = []
+        t = ti / NT; c = p - d * 0.07 + d * (L * t * 0.97 + 0.07) + bend * (t * t * 0.97)
+        r = Rb * 0.8 * (1 - t) ** 0.8 * (1 + 0.5 * math.exp(-t * 8.0)); ring = []
         for k in range(K):
-            th = 6.2832 * k / K
-            m = 1 + (0.075 * math.sin(14 * th + tw * t * 3) + 0.055 * math.sin(23 * th - 0.6 * t) + 0.045 * math.sin(41 * th + 5 * t) + 0.02 * math.sin(67 * th - 7 * t)) * (1 - t ** 2.5)
-            pos = c + (u * math.cos(th) * ell_ + v * math.sin(th)) * r * m * (1.0 if t < 0.97 else 0.6)
-            thetas[(ti, k)] = th; ring.append(bm2.verts.new(P(*pos)))
+            th = 6.2832 * k / K; ring.append(bm2.verts.new(P(*(c + (u * math.cos(th) + v * math.sin(th)) * r))))
         rings.append(ring)
-    tipv = bm2.verts.new(P(*(p - d * 0.07 + d * (L + 0.07) + bend)))
+    tipv = bm2.verts.new(P(*(p - d * 0.07 + d * (L * 0.97 + 0.07) + bend * 0.97)))
     for ti in range(NT):
         for k in range(K): bm2.faces.new((rings[ti][k], rings[ti][(k + 1) % K], rings[ti + 1][(k + 1) % K], rings[ti + 1][k]))
     for k in range(K): bm2.faces.new((rings[NT][k], rings[NT][(k + 1) % K], tipv))
-    me = bpy.data.meshes.new('spike%d' % si); bm2.to_mesh(me); bm2.free()
-    ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT'); other = 'b' if kind == 'a' else 'a'
+    me = bpy.data.meshes.new('core%d' % si); bm2.to_mesh(me); bm2.free()
+    ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT'); bs, tp = HAIRCOL_S[kind]
     for i, vv in enumerate(me.vertices):
-        if i < (NT + 1) * K: ti, k = divmod(i, K); th = thetas[(ti, k)]
-        else: ti, k, th = NT, 0, 0.0
-        t = ti / NT; accent = math.sin(9 * th + tw * t * 3 + si) > 0.86
-        bs, tp = HAIRCOL_S[other if accent else kind]
-        stripe = 0.84 + 0.26 * (math.sin(31 * th + 4 * t) * 0.5 + 0.5); tt = min(1.0, t * 1.15)
-        ca.data[i].color = (lerp(bs[0], tp[0], tt) * stripe, lerp(bs[1], tp[1], tt) * stripe, lerp(bs[2], tp[2], tt) * stripe, 1.0)
+        pw = Vector((vv.co.x, vv.co.z, -vv.co.y)); t = min(1.0, max(0.0, (pw - p).dot(d) / (L + 0.07)))
+        ca.data[i].color = (lerp(bs[0], tp[0], t * 0.9) * 0.8, lerp(bs[1], tp[1], t * 0.9) * 0.8, lerp(bs[2], tp[2], t * 0.9) * 0.8, 1.0)
     for pl in me.polygons: pl.use_smooth = True
-    ob = bpy.data.objects.new('spike%d' % si, me); scene.collection.objects.link(ob); return ob
+    ob = bpy.data.objects.new('core%d' % si, me); scene.collection.objects.link(ob); return ob
 for si, (p, n, a_, y) in enumerate(spikes):
-    spike_objs.append(build_spike(si, p, n, 'a' if si % 2 == 0 else 'b'))
+    topness = max(0.0, n.y); frontness = max(0.0, n.z) * (1 - topness)
+    d = (n * (0.55 - 0.3 * frontness) + V3(0, 1.0 + 0.4 * topness, 0) + V3(0, 0, -0.45 * frontness) + V3(HR.uniform(-1, 1), HR.uniform(-0.3, 0.3), HR.uniform(-1, 1)) * 0.22).normalized()
+    L = (0.72 + 0.5 * HR.random() ** 1.2 + 0.4 * topness) * (1 - 0.2 * frontness)
+    u, v = basis(d); bend = (u * HR.uniform(-1, 1) + v * HR.uniform(-1, 1)).normalized() * HR.uniform(0.05, 0.13) * L
+    Rb = HR.uniform(0.17, 0.22); kind = 'a' if si % 2 == 0 else 'b'; other = 'b' if kind == 'a' else 'a'
+    spike_objs.append(build_core(si, p, d, L, bend, Rb, kind))
+    omega = HR.choice((-1, 1)) * HR.uniform(0.4, 1.1)
+    subs = []   # 3 sub-clumps per spike: own root cluster and slightly diverging tip, so each gel spike has a feathered, hair-like point
+    for j in range(3):
+        ph = HR.random() * 6.283; subs.append((u * math.cos(ph) + v * math.sin(ph), HR.uniform(0.25, 0.5) * Rb, HR.uniform(0.04, 0.11) * L, HR.uniform(0.8, 1.0)))
+    for k in range(120):
+        ax, cen, spread, lkj = subs[k % 3]
+        rho = Rb * 0.6 * math.sqrt(HR.random()); ph0 = HR.random() * 6.283; lk = lkj * HR.uniform(0.82, 1.0); th_ = HR.uniform(0.75, 1.35)
+        pts, wts = [], []
+        for ti in range(8):
+            t = ti / 7.0; tl = t * lk
+            off = ax * (cen * (1 - t ** 1.2 * 0.85)) + u * (math.cos(ph0 + omega * t) * rho * (1 - t ** 1.3)) + v * (math.sin(ph0 + omega * t) * rho * (1 - t ** 1.3))
+            jit = V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * (0.007 * L * t)
+            pos = p - d * 0.07 + d * (L * tl + 0.07) + bend * (tl * tl) + ax * (spread * t ** 2.2) + off + jit
+            pts.append(tuple(pos)); wts.append(max(0.1, (1 - t) ** 0.7) * th_)
+        strands['a' if (kind == 'a') != (HR.random() < 0.16) else 'b'].append((pts, wts))
 for _ in range(4200):
     a_, y = scalp_sample(0.0); p, n = head_pt(a_, y); l = HR.uniform(0.06, 0.14)
     dd = (n + V3(0, 0.45, 0) + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.3).normalized()
@@ -363,6 +375,7 @@ for _ in range(0):  # flyaways (removed: no wispy strands)
     pts = [tuple(p + dd * (l * t) + curl * (t * t) + V3(0, -0.05 * l * t ** 3, 0)) for t in (0, 0.25, 0.5, 0.75, 1.0)]
     fly[kind_at(p)].append((pts, [1.0, 0.85, 0.6, 0.35, 0.1]))
 for kind, mat in (('a', m_pink), ('b', m_teal)):
+    curve_obj('locks' + kind, strands[kind], 0.034, mat, 'BEZIER', 2)
     curve_obj('under' + kind, under[kind], 0.02, mat, 'POLY', 1)
     curve_obj('baby' + kind, baby[kind], 0.011, mat, 'POLY', 1)
     curve_obj('fly' + kind, fly[kind], 0.007, mat, 'BEZIER', 2)
@@ -409,7 +422,7 @@ m_hair, nt_, b_ = new_mat('hair'); setp(b_, Roughness=0.35)
 vc = nt_.nodes.new('ShaderNodeVertexColor'); vc.layer_name = 'Col'; nt_.links.new(vc.outputs['Color'], b_.inputs['Base Color'])
 HAIRCOL = {'a': ((0.30, 0.0, 0.13), (0.86, 0.10, 0.50)), 'b': ((0.0, 0.22, 0.20), (0.10, 0.78, 0.68))}
 hair_objs = []
-for ob in [o for o in scene.objects if o.type == 'CURVE' and o.name.startswith(('under', 'baby', 'fly'))]:
+for ob in [o for o in scene.objects if o.type == 'CURVE' and o.name.startswith(('locks', 'under', 'baby', 'fly'))]:
     kind = ob.name[-1]; bpy.ops.object.select_all(action='DESELECT'); ob.select_set(True); bpy.context.view_layer.objects.active = ob
     bpy.ops.object.convert(target='MESH'); me = ob.data
     ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT'); base, tip = HAIRCOL[kind]
