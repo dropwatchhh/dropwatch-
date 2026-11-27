@@ -16,7 +16,7 @@ const fill = new THREE.PointLight(0xff5fb0, 30, 20); fill.position.set(4, 1, 4);
 const rim = new THREE.PointLight(0x40ffe0, 40, 20); rim.position.set(-3, 3, -5); camera.add(rim);
 scene.add(new THREE.HemisphereLight(0xc9c0ff, 0x3a1a30, 0.5));
 let head;
-new GLTFLoader().load('/assets/dex_head.glb', g => { head = g.scene; scene.add(head);
+new GLTFLoader().load('/assets/' + (new URLSearchParams(location.search).get('glb') || 'dex') + '_head.glb', g => { head = g.scene; scene.add(head);
   head.traverse(o => { if (o.isMesh) { const m = o.material; if (m && m.map) m.map.colorSpace = THREE.SRGBColorSpace; } });
   window.names = []; head.traverse(o => window.names.push(o.name)); window.ready = true; });
 window.job = ({ w, h, eyes = 'eyes_open', brows = 'brows_up', mouth = 'mouth_smile', deg = 0, dist = 3.2, camY = 2.3, look = 2.3 }) => {

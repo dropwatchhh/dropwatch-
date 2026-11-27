@@ -199,3 +199,32 @@ Priya's character and cart, the separate van-interior set and the extra location
 | 15 fps, every other frame | 990 | 1.0 h | 1.9 h |
 
 Because the camera changes every 2 seconds, almost every shot is new each day, so caching doesn't save much. The 2-hour window holds only with every-other-frame animation or with speed-ups I haven't measured (raw frame transfer, or two renderers at once on the 4 cores). That is a real risk to the daily 2 PM schedule.
+
+## 11. All-3D build status and revised estimates (after the "everything must be real 3D" requirement)
+
+**Built and shown as stills (`design/world3d/`):** Dex, Gig the raccoon, Nana Dot and Lena (a 3D character in her own 3D room, shown inside a flat video-call frame); the parking lot, the van outside (with a hero shot), the van cab (driver POV and cutaway), Maple Street, and the flower stand; props: guitar, pigeons, tulips, GPS screen, ring-light rig, mic.
+
+**How:** Blender builds each face and hairstyle (`blender/char_head_export.py`, one script with a look for each of Dex, Nana Dot and Lena) and exports it to glTF. three.js builds the bodies (`render3d/person.mjs`, `render3d/gig.mjs`) and the world (`render3d/world.mjs`), and renders every location through one stage (`render3d/stage_world.html`). Everything is free and already installed.
+
+**Measured render time per 1080×1920 still (this machine), including rebuilding the scene and PNG encoding:**
+
+| Scene | Seconds |
+|---|---|
+| Gig alone | 0.8–1.6 |
+| Van from outside | 2.3 |
+| Van cab | 2.2–3.1 |
+| Maple Street | 3.8–4.2 |
+| Parking lot with Dex | 4.8–5.3 |
+| Lena's call room | 4.5 |
+| Flower stand with Nana Dot | 5.7–6.0 |
+
+**Episode 1 (66 s) estimate:** the 9-second vote card and the freeze before it are one frame held, so about 54 s of unique footage is rendered. Weighting by the shot list gives about **4.4 s per frame**.
+
+| | Frames | Time |
+|---|---|---|
+| 24 fps | about 1,300 | **about 1.6 h** (1.3–2.1 h) |
+| Every other frame (12 fps unique) | about 650 | **about 48 min** (38–63 min) |
+
+The low end assumes steady-state rendering about 20% faster than these still timings (my estimate); the high end assumes animated, busier scenes cost about 1.3× more (my estimate).
+
+**Remaining work before Episode 1 (estimate, about 5–6 sessions, down from 8.5 because the modeling is now done):** animation system with camera cuts, lip-sync, blinks, chat, call cards, audio at -14 LUFS (1.5); animation library, with run, dive, drag, steer, horn, brace and reactions (1); polish passes on Gig's cap and close-up fur, Nana Dot's teeth, cab shots, cloth detail and contact shadows (1); audio (0.5); directing and fixing the 31 shots (2).
