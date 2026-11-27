@@ -127,6 +127,8 @@ export function buildDex() {
     // boots
     const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.185, 0.34, 32), M.boot); sh.position.y = -L2 + 0.17; knee.add(sh);
     for (const yy of [-L2 + 0.1, -L2 + 0.26]) knee.add(rbox(M.metal, 0.3, 0.035, 0.3, 0, yy, 0, 0.015));
+    for (const yy of [0.045, -0.03]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.011, 8, 28), M.jeansD ?? M.black); t.rotation.x = Math.PI / 2; t.position.y = yy; knee.add(t); }   // knee wrinkles
+    for (let k = 0; k < 5; k++) { const y0 = -L2 + 0.05 + k * 0.058; for (const sg of [-1, 1]) knee.add(tube(std(0xe9e1cf, { roughness: 0.8 }), [[-sg * 0.075, y0, 0.178], [0, y0 + 0.03, 0.188], [sg * 0.075, y0 + 0.058, 0.178]], 0.008, 10)); }   // boot laces
     const ank = pivot(knee, 0, -L2, 0);
     ank.add(rbox(M.boot, 0.36, 0.22, 0.58, 0, -0.1, 0.1, 0.09), rbox(M.sole, 0.4, 0.07, 0.62, 0, -0.185, 0.1, 0.03), rbox(M.metal, 0.12, 0.03, 0.05, 0, -0.04, 0.31, 0.012));
     rig.j[s < 0 ? 'legL' : 'legR'] = { hip, knee, ank, s };
@@ -172,26 +174,53 @@ export function buildDex() {
     const up = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.108, 0.32, 28, 4), M.leatherS); up.position.y = -0.16; sh.add(up);
     const el = pivot(sh, 0, -0.32, 0); el.add(ell(M.leatherS, 0.108, 0.108, 0.108, 0, 0, 0, 28));
     const fo = new THREE.Mesh(new THREE.CylinderGeometry(0.108, 0.097, 0.32, 28, 4), M.leatherS); fo.position.y = -0.16; el.add(fo);
+    for (const [yy, rr] of [[0.07, 0.112], [0.035, 0.115], [-0.04, 0.104], [-0.075, 0.1]]) { const t = new THREE.Mesh(new THREE.TorusGeometry(rr, 0.012, 8, 28), M.leatherD); t.rotation.x = Math.PI / 2; t.position.y = yy; t.scale.set(1, 1, 0.8); el.add(t); }   // elbow folds
+    for (const yy of [-0.05, -0.1]) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.01, 8, 28), M.leatherD); t.rotation.x = Math.PI / 2; t.position.y = yy; sh.add(t); }   // shoulder folds
+    const epa = rbox(M.leatherD, 0.2, 0.05, 0.16, 0, 0.1, 0, 0.02); epa.rotation.z = s * 0.35; sh.add(epa); for (let k = 0; k < 2; k++) sh.add(ell(M.metal, 0.018, 0.018, 0.018, s * (0.02 + k * 0.05), 0.14 - k * 0.012, 0.0, 12));
     const wr = pivot(el, 0, -0.32, 0);
     wr.add(new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.123, 0.09, 24), M.leatherD)); wr.children[0].position.y = 0.04;
     if (s > 0) { const bd = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.028, 10, 24), M.wrist); bd.rotation.x = Math.PI / 2; bd.position.y = -0.03; wr.add(bd); }
-    // hand: palm + 4 two-segment fingers + thumb
-    const palm = rbox(M.skin, 0.075, 0.12, 0.13, 0, -0.08, 0, 0.035); wr.add(palm);
+    // hand: big rounded palm, 4 two-joint fingers with knuckle spheres, 2-joint thumb; optional hand-held mic prop
+    const hg = pivot(wr, 0, 0, 0); hg.scale.setScalar(1.42);
+    hg.add(ell(M.skin, 0.064, 0.092, 0.092, 0, -0.105, 0, 28));
+    hg.add(ell(M.skin, 0.05, 0.05, 0.07, -s * 0.03, -0.045, 0, 20));                 // wrist / heel of the hand
     const fingers = [];
-    const zs = [0.045, 0.015, -0.015, -0.045], lens = [0.062, 0.07, 0.066, 0.052]; // index, middle, ring, pinky (front to back)
+    const zs = [0.064, 0.022, -0.022, -0.062], lens = [0.098, 0.108, 0.1, 0.08], rad = [0.029, 0.03, 0.028, 0.025];  // index, middle, ring, pinky (front to back)
     zs.forEach((z, i) => {
-      const f1 = pivot(wr, -s * 0.02, -0.135, z);
-      f1.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.022, lens[i] - 0.044, 6, 12), M.skin)); f1.children[0].position.y = -lens[i] / 2;
-      const f2 = pivot(f1, 0, -lens[i], 0);
-      f2.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.02, lens[i] * 0.6 - 0.04, 6, 12), M.skin)); f2.children[0].position.y = -lens[i] * 0.3;
+      const f1 = pivot(hg, -s * 0.012, -0.178, z); f1.add(ell(M.skin, rad[i] * 1.05, rad[i] * 1.05, rad[i] * 1.05, 0, 0, 0, 14));
+      const c1 = new THREE.Mesh(new THREE.CapsuleGeometry(rad[i], lens[i] - rad[i] * 2, 8, 14), M.skin); c1.position.y = -lens[i] / 2; f1.add(c1);
+      const f2 = pivot(f1, 0, -lens[i], 0); f2.add(ell(M.skin, rad[i] * 0.95, rad[i] * 0.95, rad[i] * 0.95, 0, 0, 0, 14));
+      const l2 = lens[i] * 0.78, c2 = new THREE.Mesh(new THREE.CapsuleGeometry(rad[i] * 0.92, l2 - rad[i] * 1.84, 8, 14), M.skin); c2.position.y = -l2 / 2; f2.add(c2);
       fingers.push([f1, f2]);
     });
-    const th1 = pivot(wr, -s * 0.05, -0.06, 0.05);
-    th1.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.026, 0.03, 6, 12), M.skin)); th1.children[0].position.y = -0.035;
-    const th2 = pivot(th1, 0, -0.065, 0); th2.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.022, 0.024, 6, 12), M.skin)); th2.children[0].position.y = -0.028;
-    arms[s < 0 ? 'L' : 'R'] = { sh, el, wr, fingers, th: [th1, th2], s };
+    const th1 = pivot(hg, -s * 0.058, -0.085, 0.075); th1.rotation.x = -0.2; th1.add(ell(M.skin, 0.036, 0.036, 0.036, 0, 0, 0, 14));
+    const t1 = new THREE.Mesh(new THREE.CapsuleGeometry(0.033, 0.05, 8, 14), M.skin); t1.position.y = -0.045; th1.add(t1);
+    const th2 = pivot(th1, 0, -0.09, 0); th2.add(ell(M.skin, 0.031, 0.031, 0.031, 0, 0, 0, 14));
+    const t2 = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.04, 8, 14), M.skin); t2.position.y = -0.04; th2.add(t2);
+    // hand-held microphone (visible only when the pose asks for it): handle runs front-to-back through the curled fingers
+    const prop = new THREE.Group(); prop.visible = false;
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.04, 0.4, 20), std(0x23222b, { metalness: 0.6, roughness: 0.35 })); handle.rotation.x = Math.PI / 2; prop.add(handle);
+    const mhead = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 18), std(0x9ea3ad, { metalness: 0.9, roughness: 0.25 })); mhead.position.z = 0.27; prop.add(mhead);
+    const mring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 24), std(0xd8dbe2, { metalness: 1, roughness: 0.2 })); mring.position.z = 0.19; prop.add(mring);
+    prop.position.set(-s * 0.07, -0.205, 0.0); hg.add(prop);
+    arms[s < 0 ? 'L' : 'R'] = { sh, el, wr, fingers, th: [th1, th2], s, prop };
   }
   rig.j.arms = arms;
+  // ---------- jacket detail: seams, diagonal zip, chest pocket, belly folds, shoulder and hem stitching
+  { const seam = (pts, r = 0.008, m = M.leatherD) => ci.add(tube(m, pts, r, 20));
+    for (const s of [-1, 1]) {
+      seam([[s * 0.2, 1.87, -0.03], [s * 0.3, 1.82, -0.03], [s * 0.4, 1.74, -0.03]]);                                   // shoulder seams
+      seam([[s * 0.46, 1.08, 0.0], [s * 0.42, 1.3, 0.0], [s * 0.43, 1.5, 0.0], [s * 0.4, 1.7, 0.0]]);                   // side seams
+      seam([[s * 0.36, 1.2, 0.21], [s * 0.3, 1.25, 0.28], [s * 0.22, 1.22, 0.31]], 0.01);                               // belly folds
+      seam([[s * 0.38, 1.33, 0.19], [s * 0.31, 1.37, 0.27], [s * 0.24, 1.35, 0.3]], 0.008);
+      seam([[s * 0.4, 1.46, 0.15], [s * 0.34, 1.5, 0.24]], 0.007);
+    }
+    seam([[-0.07, 1.74, 0.322], [-0.18, 1.56, 0.335], [-0.3, 1.38, 0.33]], 0.011, M.metal);                           // asymmetric biker zip
+    for (let k = 0; k < 9; k++) { const t = k / 8; ci.add(ell(M.metal, 0.014, 0.014, 0.014, lerp(-0.07, -0.3, t), lerp(1.74, 1.38, t), 0.338 - 0.02 * Math.sin(t * Math.PI) * 0 + 0.0, 8)); }
+    const pocket = rbox(M.leatherD, 0.18, 0.1, 0.03, 0.24, 1.56, 0.335, 0.02); pocket.rotation.z = -0.12; ci.add(pocket); ci.add(ell(M.metal, 0.02, 0.02, 0.02, 0.24, 1.56, 0.355, 10));
+    seam([[0.15, 1.6, 0.34], [0.33, 1.56, 0.34]], 0.006, M.black);
+    seam([[-0.42, 1.12, 0.14], [-0.2, 1.08, 0.3], [0.0, 1.07, 0.31], [0.2, 1.08, 0.3], [0.42, 1.12, 0.14]], 0.007, M.black);  // hem stitching
+  }
 
   // ---------- neck + head (pivot at the neck base)
   const neckP = pivot(ci, 0, 1.88, 0.02); const hi = pivot(neckP, 0, -1.88, -0.02); rig.j.neck = neckP;
@@ -231,8 +260,9 @@ export function setPose(rig, spec) {
     a.sh.rotation.set(-q.sh[0] * D, 0, s * q.sh[1] * D);
     a.el.rotation.set(-q.el * D, 0, 0);
     const cu = q.curl;
-    a.fingers.forEach(([f1, f2], i) => { const c = cu[i + 1]; f1.rotation.z = -s * c * 1.25; f2.rotation.z = -s * c * 1.35; });
-    a.th[0].rotation.z = -s * cu[0] * 0.7; a.th[1].rotation.z = -s * cu[0] * 0.9;
+    a.fingers.forEach(([f1, f2], i) => { const c = cu[i + 1]; f1.rotation.z = -s * c * 1.25; f2.rotation.z = -s * c * 1.35; f1.rotation.x = (i - 1.5) * 0.17 * (1 - c); });
+    a.prop.visible = !!q.prop; a.wr.rotation.y = s * (q.roll ?? 0) * D;
+    a.th[0].rotation.z = -s * (0.15 + cu[0] * 0.7); a.th[1].rotation.z = -s * cu[0] * 0.9;
   }
   let hmax = 0;
   for (const k of ['legL', 'legR']) {

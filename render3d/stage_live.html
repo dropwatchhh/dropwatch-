@@ -68,24 +68,30 @@ const van = makeVan(); van.scale.setScalar(0.72); scene.add(van);
 function legBetween(a, b, r, m) { const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length(); const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 10), m); o.position.copy(A.clone().add(B).multiplyScalar(0.5)); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); o.castShadow = true; return o; }
 const dkm = std(0x2a2833, { roughness: 0.5, metalness: 0.4 });
 const tri = new THREE.Group(); [0, 120, 240].forEach(a => { const r = a * Math.PI / 180; tri.add(legBetween([0, 2.3, 0], [Math.sin(r) * 1.15, 0.02, Math.cos(r) * 1.15], 0.045, dkm)); });
-tri.add(legBetween([0, 2.3, 0], [0, 3.0, 0], 0.05, dkm));
-const phone = new THREE.Mesh(new RoundedBoxGeometry(0.62, 1.2, 0.09, 4, 0.06), std(0x15141c, { roughness: 0.3 })); phone.position.set(0, 3.15, 0); phone.castShadow = true; tri.add(phone);
-const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.54, 1.08), new THREE.MeshBasicMaterial({ color: 0x2a3a66 })); scr.position.set(0, 3.15, 0.049); tri.add(scr);
-const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 16), std(0x0a0a10, { metalness: 0.8, roughness: 0.2 })); lens.rotation.x = Math.PI / 2; lens.position.set(-0.17, 3.62, 0.075); tri.add(lens);
-const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.07, 14, 56), new THREE.MeshBasicMaterial({ color: 0xfff0f8 })); ring.position.set(0, 3.15, -0.16); tri.add(ring);
-const ringBack = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.1, 12, 56), dkm); ringBack.position.set(0, 3.15, -0.24); tri.add(ringBack);
-tri.position.set(1.15, 0, 3.0); tri.rotation.y = -0.55; scene.add(tri);
-const ringLight = new THREE.SpotLight(0xfff2f8, 34, 16, 0.32, 0.9, 1.4); ringLight.position.set(1.0, 3.4, 3.2); ringLight.target.position.set(0, 2.4, 0); scene.add(ringLight, ringLight.target);
+tri.add(legBetween([0, 2.3, 0], [0, 2.7, 0], 0.05, dkm)); tri.add(legBetween([0, 2.7, 0], [0, 3.0, -0.02], 0.04, dkm));
+// ring light: a thick glowing ring with a slimmer dark housing behind it, so it reads as a ring from every side; the phone sits inside it
+const RR = 0.8, CY = 3.4;
+const ringGlow = new THREE.Mesh(new THREE.TorusGeometry(RR, 0.105, 18, 72), new THREE.MeshBasicMaterial({ color: 0xfff6fb })); ringGlow.position.set(0, CY, 0.05); tri.add(ringGlow);
+const ringHouse = new THREE.Mesh(new THREE.TorusGeometry(RR, 0.07, 14, 72), dkm); ringHouse.position.set(0, CY, -0.1); tri.add(ringHouse);
+const halo = new THREE.Mesh(new THREE.TorusGeometry(RR, 0.19, 12, 72), new THREE.MeshBasicMaterial({ color: 0xffd6ec, transparent: true, opacity: 0.22, depthWrite: false })); halo.position.set(0, CY, 0.04); tri.add(halo);
+const phone = new THREE.Mesh(new RoundedBoxGeometry(0.52, 1.02, 0.08, 4, 0.07), std(0x17161d, { roughness: 0.25, metalness: 0.5 })); phone.position.set(0, CY, 0.0); phone.castShadow = true; tri.add(phone);
+const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.94), new THREE.MeshBasicMaterial({ color: 0x2a3a66 })); scr.position.set(0, CY, 0.042); tri.add(scr);
+const lensA = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 20), std(0x050508, { metalness: 0.9, roughness: 0.15 })); lensA.rotation.x = Math.PI / 2; lensA.position.set(-0.1, CY + 0.34, -0.06); tri.add(lensA);
+const lensB = lensA.clone(); lensB.position.set(0.0, CY + 0.2, -0.06); lensB.scale.set(0.7, 1, 0.7); tri.add(lensB);
+const led = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff2a3a })); led.position.set(0.16, CY + 0.42, -0.055); tri.add(led);
+const clamp = new THREE.Mesh(new RoundedBoxGeometry(0.2, 0.2, 0.16, 3, 0.04), dkm); clamp.position.set(0, 3.0, -0.05); tri.add(clamp);
+tri.position.set(-1.25, 0, 2.6); tri.rotation.y = 2.66; scene.add(tri);
+const ringLight = new THREE.SpotLight(0xfff2f8, 34, 16, 0.4, 0.9, 1.4); ringLight.position.set(-1.1, CY, 2.4); ringLight.target.position.set(0, 2.3, 0); scene.add(ringLight, ringLight.target);
 const mic = new THREE.Group(); mic.add(new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.45, 0.07, 24), dkm)); mic.children[0].position.y = 0.035; mic.add(legBetween([0, 0.05, 0], [0, 2.9, 0], 0.035, dkm)); mic.add(legBetween([0, 2.9, 0], [-0.95, 2.45, 0.1], 0.03, dkm));
 const capsule = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.42, 16), std(0x1d1c24, { metalness: 0.6, roughness: 0.35 })); capsule.position.set(-0.98, 2.42, 0.1); capsule.rotation.z = 0.6; mic.add(capsule);
 const foam = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 12), std(0x23222b, { roughness: 0.95 })); foam.position.set(-1.1, 2.55, 0.1); mic.add(foam);
-mic.position.set(-2.05, 0, 0.5); mic.rotation.y = Math.PI; mic.traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(mic);
+mic.position.set(2.55, 0, 1.2); mic.visible = false; mic.traverse(o => { if (o.isMesh) o.castShadow = true; }); scene.add(mic);
 const tbl = new THREE.Group(); const top = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.09, 28), std(0xf0e6d0)); top.position.y = 1.5; tbl.add(top); [0, 120, 240].forEach(a => { const r = a * Math.PI / 180; tbl.add(legBetween([Math.sin(r) * 0.5, 1.48, Math.cos(r) * 0.5], [Math.sin(r) * 0.8, 0.02, Math.cos(r) * 0.8], 0.04, dkm)); });
 const lap = new THREE.Mesh(new RoundedBoxGeometry(0.9, 0.05, 0.62, 3, 0.02), std(0x9a9aa8, { metalness: 0.6, roughness: 0.4 })); lap.position.set(0, 1.58, 0.05); tbl.add(lap);
 const lscr = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.56), new THREE.MeshBasicMaterial({ map: tex(cv(256, 160, (g, w, h) => { g.fillStyle = '#1b2a55'; g.fillRect(0, 0, w, h); for (let y = 14; y < h; y += 22) { g.fillStyle = 'rgba(255,255,255,0.75)'; g.fillRect(10, y, 40 + Math.random() * 150, 8); g.fillStyle = '#ff5fa8'; g.fillRect(10, y, 8, 8); } })) }));
 lscr.position.set(0, 1.92, -0.25); lscr.rotation.x = -0.25; tbl.add(lscr);
 const can = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.36, 16), std(0xe03a4a, { metalness: 0.7, roughness: 0.3 })); can.position.set(0.55, 1.73, 0.3); tbl.add(can);
-tbl.position.set(2.6, 0, -2.4); tbl.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); scene.add(tbl);
+tbl.position.set(2.6, 0, -2.4); tbl.visible = false; tbl.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); scene.add(tbl);
 
 // ---- lights: low warm sun from behind-left, ring light on his face, cool fill
 const sunL = new THREE.DirectionalLight(0xffb060, 2.6); sunL.position.set(-13, 9, -11); sunL.target.position.set(0, 1.5, 0); sunL.castShadow = true;
@@ -97,20 +103,19 @@ scene.add(new THREE.HemisphereLight(0xffc898, 0x4a3a6a, 0.45));
 
 // ---- Dex: rigged body + the Blender head
 const rig = buildDex(); scene.add(rig.root);
-M.skin.color.set(0xc4906f); M.leather.bumpScale = 0; M.leatherS.bumpScale = 0; M.leather.clearcoat = 0.25; M.leatherS.clearcoat = 0.25; M.leatherD.clearcoat = 0.2;
+M.skin.color.set(0xc4906f); M.leather.bumpScale = 0.7; M.leatherS.bumpScale = 0.7; M.leather.clearcoat = 0.25; M.leatherS.clearcoat = 0.25; M.leatherD.clearcoat = 0.2;
 const glb = await new Promise(res => new GLTFLoader().load('/assets/dex_head.glb', res));
 glb.scene.traverse(o => { if (o.isMesh) { o.castShadow = o.name !== 'hair'; o.receiveShadow = true; if (o.material.map) o.material.map.colorSpace = THREE.SRGBColorSpace; } });
 rig.attachHead(glb.scene);
 rig.root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 
 const camera = new THREE.PerspectiveCamera(34, 9 / 16, 0.1, 200);
-['L', 'R'].forEach(k => rig.j.arms[k].wr.scale.setScalar(1.55));
 window.rig = rig; window.THREE = THREE;
-window.job = ({ w = 1080, h = 1920, pose = 'neutral', face = {}, vanX = 0.4, vanYaw = -0.1, wheel = 0, cam = {}, dexX = 0, dexZ = 0 }) => {
+window.job = ({ w = 1080, h = 1920, pose = 'neutral', face = {}, vanX = 0.9, vanYaw = -0.1, wheel = 0, cam = {}, dexX = 0, dexZ = 0 }) => {
   renderer.setSize(w, h); camera.aspect = w / h; camera.fov = cam.fov ?? 44; camera.updateProjectionMatrix();
   setPose(rig, pose); setFace(rig, face); rig.root.position.x = dexX; rig.root.position.z = dexZ;
   van.position.set(vanX, 0, -5.2); van.rotation.y = vanYaw; van.userData.wheels.forEach(wl => wl.rotation.z = -wheel);
-  const p = cam.pos ?? [0.1, 1.25, 8.6], l = cam.look ?? [0.0, 1.8, 0]; camera.position.set(...p); camera.lookAt(...l); camera.updateMatrixWorld();
+  const p = cam.pos ?? [0.1, 1.3, 9.2], l = cam.look ?? [0.0, 1.85, 0]; camera.position.set(...p); camera.lookAt(...l); camera.updateMatrixWorld();
   renderer.render(scene, camera);
 };
 window.ready = true;

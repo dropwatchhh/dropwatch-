@@ -171,3 +171,31 @@ Loudness of the test audio: -19.5 LUFS (a final mix should be raised toward abou
 Real scenes with two or three characters and more set pieces will be slower than this test scene (my estimate: 1.3–2×, not measured). Rendering raw frames instead of PNGs should save about a second per frame (also an estimate). The daily window is about 2 hours, so this fits at 24 fps or with "on twos" animation, not comfortably at 30 fps for busy scenes.
 
 **Build still needed before Episode 1 (estimate, about 8–12 more working sessions like this one):** hands and jacket polish; Gig, Nana Dot and Priya as full 3D characters; the flower stand, noodle cart, Maple Street and the van interior; an animation timeline with camera cuts and lip-sync; then the shot-by-shot animation of Episode 1.
+
+## 10. Revised build estimate for the simplified Episode 1 (v3)
+
+"One working session" means one long turn like the recent ones, ending in a result you can look at. All of it is free and uses only tools already installed.
+
+| Item | What it needs | Sessions |
+|---|---|---|
+| Dex | Done: head and hair, rigged body, big hands with clear fingers, hand-held mic, jacket seams and folds, boot laces. Still to do: run, dive, dragged and reaction poses; expression timeline. | 0.75 |
+| Gig the raccoon | Full 3D model and rig: head, body, paws, tail, cap; steering and horn poses; eye and mouth variants | 1 |
+| The van | Exterior is done. The cab interior still needs: dashboard, wheel, GPS screen, guitar on the seat, windshield. | 0.75 |
+| Maple Street and the flower stand | A downhill road, houses, a stand with tulip buckets, pigeons | 1 |
+| Nana Dot | One full-body model for the one short shot, plus a bust for her call card | 0.75 |
+| Lena | One call-card picture | 0.25 |
+| Animation system | Shot timeline file, camera cuts, lip-sync, blinks, chat scroll, banners, call cards, split screen, vote card, audio mix at -14 LUFS, shot-by-shot rendering, assembly | 1.5 |
+| Audio | Five voices, an original music loop, sound effects | 0.5 |
+| Directing Episode 1 | Authoring 31 shots, tuning, watching it back, fixing | 2 |
+| **Total** | | **about 8.5** (range 7–10) |
+
+Priya's character and cart, the separate van-interior set and the extra locations are what I cut. They would have added roughly 2–3 sessions.
+
+**Daily render time after the build (measured at 3.5 s/frame for the lot scene, 1080×1920):**
+
+| 66 s episode | Frames | At 3.5 s | At 7 s (if busy scenes cost twice as much, my estimate) |
+|---|---|---|---|
+| 24 fps | 1,584 | 1.5 h | 3.1 h |
+| 15 fps, every other frame | 990 | 1.0 h | 1.9 h |
+
+Because the camera changes every 2 seconds, almost every shot is new each day, so caching doesn't save much. The 2-hour window holds only with every-other-frame animation or with speed-ups I haven't measured (raw frame transfer, or two renderers at once on the 4 cores). That is a real risk to the daily 2 PM schedule.
