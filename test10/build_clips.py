@@ -20,7 +20,7 @@ add("c1_dex_run",LS,lambda t,u:{"anim":"selfie","t":t,"amp":1.15,"cam":{"rel":Tr
 add("c1_dex_run",LS,lambda t,u:{"anim":"boot","k":u,"t":t,"dur":2.5,"cam":{"rel":True,"pos":[5.2,1.0,0.5],"look":[0,0.1,-1.2],"fov":42}},2.5)
 # ---- C2 chase and grab
 def van(t,sp=5.0): return {"vanZ":-sp*t,"vanG":t}
-add("c2_dive_drag_hang_reach",LS,lambda t,u:{**van(t),"anim":"dive","t":u,"cam":{"rel":True,"pos":[5.6,0.9,2.4],"look":[0,0.3,-0.9],"fov":42}},2.5)
+add("c2_dive_drag_hang_reach",LS,lambda t,u:{**van(t),"anim":"dive","t":u,"cam":{"rel":True,"pos":[7.5,1.3,2.8],"look":[0,0.4,-0.6],"fov":42}},2.5)
 add("c2_dive_drag_hang_reach",LS,lambda t,u:{**van(2.5+t),"anim":"drag","g":t,"cam":{"rel":True,"pos":[3.0,0.8,3.4],"look":[0,0.2,-1.5],"fov":42}},2.0)
 add("c2_dive_drag_hang_reach",LS,lambda t,u:{**van(4.5+t),"anim":"hang","g":t,"cam":{"rel":True,"pos":[4.4,1.0,0.8],"look":[0,0.6,-0.6],"fov":40}},1.5)
 add("c2_dive_drag_hang_reach",LS,lambda t,u:{**van(6.0+t),"anim":"reach","t":u,"g":t,"cam":{"rel":True,"pos":[3.0,1.1,1.0],"look":[0,0.5,-0.7],"fov":42}},1.5)

@@ -12,6 +12,7 @@ export function install(E) {
     }
     const vz = H.van ? H.van.position.z : 0, rear = rearOf(vz);
     const face = s.face ?? {};
+    if (H.van && (s.anim === 'run' || s.anim === 'selfie' || s.anim === 'boot')) H.van.visible = false;
     switch (s.anim) {
       case 'run': case 'selfie': {
         const sp = s.speed ?? 4.6, p = A.stridePhase(t, sp); setPose(H.dex, A.run(p, { amp: s.amp ?? 1, phone: s.anim === 'selfie', yaw: 180 })); H.dex.root.position.set(0, H.dex.root.position.y, -sp * t); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: 'mouth_shout', ...face }); focus = V(0, 1.0, -sp * t); break; }
