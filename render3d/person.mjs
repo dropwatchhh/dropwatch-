@@ -112,7 +112,7 @@ export function buildPerson(opts = {}) {
   const PUNK = opts.punk !== false;
   const NAIL = std(0xe9b9a6, { roughness: 0.4 });
   if (opts.fabric) for (const k of ['leather', 'leatherS', 'leatherD']) { M[k].clearcoat = 0; M[k].roughness = 0.85; M[k].bumpScale = 0; }
-  const root = new THREE.Group();
+  const root = new THREE.Group(); root.rotation.order = 'YXZ';
   const rig = { root, j: {} };
   const all = o => o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
 
@@ -212,7 +212,12 @@ export function buildPerson(opts = {}) {
     const mhead = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 18), std(0x9ea3ad, { metalness: 0.9, roughness: 0.25 })); mhead.position.z = 0.27; prop.add(mhead);
     const mring = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 8, 24), std(0xd8dbe2, { metalness: 1, roughness: 0.2 })); mring.position.z = 0.19; prop.add(mring);
     prop.position.set(-s * 0.07, -0.205, 0.0); hg.add(prop);
-    arms[s < 0 ? 'L' : 'R'] = { sh, el, wr, fingers, th: [th1, th2], s, prop };
+    // hand-held phone (screen toward the face when the arm is raised); toggled by pose.phone
+    const phone = new THREE.Group(); phone.visible = false;
+    phone.add(new THREE.Mesh(new RoundedBoxGeometry(0.15, 0.29, 0.024, 3, 0.02), std(0x17161d, { roughness: 0.25, metalness: 0.5 })));
+    const pscr = new THREE.Mesh(new THREE.PlaneGeometry(0.135, 0.265), new THREE.MeshBasicMaterial({ color: 0x8a5fd0 })); pscr.position.z = 0.013; phone.add(pscr);
+    phone.position.set(-s * 0.05, -0.19, 0.05); phone.rotation.set(0, -s * 0.2, 0); hg.add(phone);
+    arms[s < 0 ? 'L' : 'R'] = { sh, el, wr, fingers, th: [th1, th2], s, prop, phone };
   }
   rig.j.arms = arms;
   // ---------- jacket detail: seams, diagonal zip, chest pocket, belly folds, shoulder and hem stitching
@@ -259,6 +264,7 @@ export function buildPerson(opts = {}) {
     // skinned jeans replace the leg tubes (bend smoothly at the knee, creases, ripped patches)
     const hideJ = new Set([M.jeans, M.skinD, M.white]); if (M.jeansD) hideJ.add(M.jeansD);
     for (const k of ['legL', 'legR']) rig.j[k].hip.traverse(o => { if (!o.isMesh) return; if (hideJ.has(o.material) || o.geometry.type === 'TorusGeometry') o.visible = false; });
+    rig.bootParts = { L: [], R: [] }; for (const [k, key] of [['legL', 'L'], ['legR', 'R']]) { const lg = rig.j[k]; for (const g of [lg.knee, lg.ank]) g.traverse(o => { if (o.isMesh && o.visible && o.material !== M.skin) rig.bootParts[key].push(o); }); const sock = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), std(0xf2eee6, { roughness: 0.9 })); sock.scale.set(0.15, 0.085, 0.27); sock.position.set(0, -0.1, 0.1); sock.visible = false; lg.ank.add(sock); const ankleSock = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.16, 0.25, 20), std(0xf2eee6, { roughness: 0.9 })); ankleSock.position.set(0, 0.08, 0); ankleSock.visible = false; lg.ank.add(ankleSock); rig.bootParts[key + 'Sock'] = [sock, ankleSock]; }
     const JJ = buildJeans(rig, M, { hipY: HIPY, kneeY: HIPY - L1, bones: [rig.j.legL.hip, rig.j.legL.knee, rig.j.legR.hip, rig.j.legR.knee], rips: PUNK });
     for (const m of JJ.meshes) root.add(m); root.updateMatrixWorld(true); for (const m of JJ.meshes) m.bind(JJ.skeleton); rig.jeans = JJ;
   }
@@ -269,6 +275,7 @@ export function buildPerson(opts = {}) {
 
 // ---------- face: the Blender head carries every eye/brow/mouth variant as a named group; show exactly one of each
 function applyHead(rig) { const a = rig._poseHead ?? [0, 0, 0], b = rig._exprHead ?? [0, 0, 0]; rig.j.neck.rotation.set((a[0] + b[0]) * D, (a[1] + b[1]) * D, (a[2] + b[2]) * D); }
+export function setBoot(rig, side, on) { for (const o of rig.bootParts[side]) o.visible = on; for (const o of rig.bootParts[side + 'Sock']) o.visible = !on; }
 export function setFace(rig, f) {
   const want = new Set([f.eyes ?? 'eyes_open', f.brows ?? 'brows_flat', f.mouth ?? 'mouth_smile']);
   rig.headRoot.traverse(o => { if (/^(eyes|brows|mouth)_/.test(o.name)) o.visible = want.has(o.name); });
@@ -295,7 +302,7 @@ export function setPose(rig, spec) {
     a.el.rotation.set(-q.el * D, 0, 0);
     const cu = q.curl;
     a.fingers.forEach(([f1, f2], i) => { const c = cu[i + 1]; f1.rotation.z = -s * c * 1.25; f2.rotation.z = -s * c * 1.35; f1.rotation.x = (i - 1.5) * 0.17 * (1 - c); });
-    a.prop.visible = !!q.prop; a.wr.rotation.y = s * (q.roll ?? 0) * D;
+    a.prop.visible = !!q.prop; a.phone.visible = !!q.phone; a.wr.rotation.y = s * (q.roll ?? 0) * D;
     a.th[0].rotation.z = -s * (0.15 + cu[0] * 0.7); a.th[1].rotation.z = -s * cu[0] * 0.9;
   }
   let hmax = 0;
@@ -306,7 +313,7 @@ export function setPose(rig, spec) {
     l.ank.rotation.set(a - kn, 0, -s * q.hip[1] * D); // keep soles flat
     hmax = Math.max(hmax, rig.L1 * Math.cos(a) * Math.cos(q.hip[1] * D) + rig.L2 * Math.cos(a - kn) * Math.cos(q.hip[1] * D));
   }
-  rig.root.position.y = hmax - (rig.L1 + rig.L2);
+  rig.root.position.y = p.rootY ?? (hmax - (rig.L1 + rig.L2)); rig.root.rotation.x = (p.pitch ?? 0) * D; rig.root.rotation.z = (p.roll ?? 0) * D;
 }
 
 export const buildDex = () => buildPerson({});

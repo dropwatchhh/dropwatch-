@@ -6,10 +6,11 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { buildPerson, setPose, setFace, POSES } from '/person.mjs';
+import { buildPerson, setPose, setFace, setBoot, POSES } from '/person.mjs';
 const POSES_NEUTRAL = { ...POSES.neutral };
 import { buildGig, setGigPose, setGigFace } from '/gig.mjs';
 import { makeVan, makeLot, makeStreet, makeStand, makeCab, makeGuitar, makePigeon, cv, tex, std, legBetween, skyGradient, sunSprite } from '/world.mjs';
+import { pigeonFlock, tulipBurst } from '/anim_lib.mjs';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); renderer.setPixelRatio(1);
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -72,6 +73,18 @@ const builders = {
     const l = await person('lena'); setPose(l, { ...POSES_NEUTRAL, yaw: 0 }); setFace(l, { mouth: 'mouth_closed_smirk' }); place(l.root, j.vanBeside ? 1.6 : -1.7, j.vanBeside ? 0 : 0.16, BZ, -0.3);
     dyn.updateMatrixWorld(true); const hh = o => { const b = new THREE.Box3().setFromObject(o); return (b.max.y - b.min.y).toFixed(2); }; console.error('HEIGHTS dex', hh(d.root), 'nana', hh(n.root), 'lena', hh(l.root), 'gig', hh(gig.root), 'van', hh(van));
     const gt = makeGuitar(); gt.scale.setScalar(0.34); gt.position.set(j.vanBeside ? 0.5 : 4.0, j.vanBeside ? 0 : 0.7, BZ + (j.vanBeside ? 0.2 : 0)); if (j.vanBeside) { gt.rotation.set(0, 0.3, 0.1); gt.position.y = 0.52; gt.rotation.z = 1.2; } gt.rotation.set(0, 0.3, 0.1); dyn.add(gt); if (j.vanBeside) { const t = makeTripod(); place(t, 3.1, 0, BZ + 0.3, 0.5); }
+  },
+  async lab_street(j) {   // animation lab: Maple Street, van, Dex, Nana Dot at her stand, pigeons, tulips, a boot
+    if (j.tilt) dyn.rotation.x = j.tilt;
+    sky.day(); exposure(0.9); scene.environment = env; scene.environmentIntensity = 0.35; makeStreet(dyn);
+    const stand = makeStand(); place(stand, 0, 0, -30, 0, 0.62); H.stand = stand; sunLight(0xfff0d8, 2.8, [10, 22, 12], [0, 0, -12], 30); dyn.add(new THREE.HemisphereLight(0xcfe4ff, 0x6a8a5a, 0.6));
+    const van = makeVan(); H.van = van; place(van, 0, 0, -6, Math.PI / 2, 0.8);
+    const d = await person('dex'); H.dex = d; place(d.root, 0, 0, 0, 0);
+    const n = await person('nana'); H.nana = n; place(n.root, -2.1, 0, -30 + 0.4, 0.15, 1);
+    const fl = pigeonFlock(THREE, makePigeon); dyn.add(fl.group); H.pigeons = fl; fl.group.position.set(0, 0, -18); fl.update(-1);
+    const tb = tulipBurst(THREE); dyn.add(tb.group); H.tulips = tb; tb.group.position.set(0.0, 0.5, -29); tb.update(-1);
+    const boot = new THREE.Group(); { const bm = std(0x14131a, { roughness: 0.4 }); const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.185, 0.34, 20), bm); sh.position.y = 0.17; const so = new THREE.Mesh(new RoundedBoxGeometry(0.4, 0.07, 0.62, 3, 0.03), std(0xf1ede4)); so.position.set(0, -0.03, 0.12); const toe = new THREE.Mesh(new RoundedBoxGeometry(0.36, 0.2, 0.58, 4, 0.09), bm); toe.position.set(0, 0.09, 0.1); boot.add(sh, so, toe); boot.scale.setScalar(0.41); boot.visible = false; dyn.add(boot); H.boot = boot; }
+    const can = new THREE.Group(); { const cm = std(0x2fa8a0, { metalness: 0.5, roughness: 0.4 }); const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 16), cm); body.position.y = 0.11; const sp = legBetween([0.1, 0.1, 0], [0.3, 0.24, 0], 0.016, cm); const hd = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.01, 8, 16, Math.PI), cm); hd.position.set(-0.1, 0.2, 0); hd.rotation.z = -Math.PI / 2; can.add(body, sp, hd); can.visible = false; dyn.add(can); H.can = can; }
   },
   async street(j) {
     if (j.tilt) dyn.rotation.x = j.tilt;
@@ -136,6 +149,6 @@ window.job = async (j) => {
   await builders[j.scene](j);
   const c = j.cam ?? {}; camera.position.set(...(c.pos ?? [0, 2, 9])); camera.lookAt(...(c.look ?? [0, 1.8, 0])); camera.updateMatrixWorld(); if (!j.norender) renderer.render(scene, camera);
 };
-import('/anim_layer.mjs').then(m=>{ m.install({THREE,camera,renderer,scene,getH:()=>H,setPose,setFace,setGigPose,setGigFace}); window.THREE_Box3 = THREE.Box3; window.ready = true; });
+import('/anim_layer.mjs').then(m=>{ m.install({THREE,camera,renderer,scene,getH:()=>H,setPose,setFace,setGigPose,setGigFace}); window.THREE_Box3 = THREE.Box3; import('/anim_lab.mjs').then(l => { l.install({THREE,camera,renderer,scene,getH:()=>H,setPose,setFace,setBoot,setGigPose,setGigFace}); window.ready = true; }); });
 
 </script>
