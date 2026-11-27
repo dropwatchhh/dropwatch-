@@ -145,7 +145,7 @@ export function buildPerson(opts = {}) {
   const chest = pivot(root, 0, WAIST, 0); const ci = pivot(chest, 0, -1.15 * YS, 0); ci.scale.set(XS, YS, XS); rig.j.chest = chest;
   // tee body
   const teeProf = [[0.43, 0], [0.43, 0.2], [0.4, 0.42], [0.36, 0.62], [0.27, 0.74], [0.17, 0.8]].map(([r, y]) => new THREE.Vector2(r * 0.93, y));
-  const tee = new THREE.Mesh(new THREE.LatheGeometry(teeProf, 40), M.tee); { const tp = tee.geometry.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = Math.min(1, Math.max(0, (y - 0.5) / 0.28)), sm = k * k * (3 - 2 * k); tp.setX(i, tp.getX(i) * (0.88 + 0.14 * sm)); tp.setZ(i, tp.getZ(i) * (0.5 + 0.5 * sm)); } tee.geometry.computeVertexNormals(); } tee.position.y = 1.04; ci.add(tee);
+  const tee = new THREE.Mesh(new THREE.LatheGeometry(teeProf, 40), M.tee); { const tp = tee.geometry.attributes.position; for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), k = Math.min(1, Math.max(0, (y - 0.5) / 0.28)), sm = k * k * (3 - 2 * k); tp.setX(i, tp.getX(i) * (0.88 + 0.1 * sm)); tp.setZ(i, tp.getZ(i) * (0.5 + 0.26 * sm)); } tee.geometry.computeVertexNormals(); } tee.position.y = 1.04; ci.add(tee);
   const chev = new THREE.Shape(); chev.moveTo(-0.075, -0.02); chev.lineTo(0, 0.075); chev.lineTo(0.075, -0.02); chev.lineTo(0.048, -0.02); chev.lineTo(0, 0.038); chev.lineTo(-0.048, -0.02); chev.closePath();
   const ch = new THREE.Mesh(new THREE.ExtrudeGeometry(chev, { depth: 0.012, bevelEnabled: false }), M.white); ch.position.set(0, 1.46, 0.262); if (PUNK) ci.add(ch);
   // jacket: tailored lathe, flared hem, open front gap
