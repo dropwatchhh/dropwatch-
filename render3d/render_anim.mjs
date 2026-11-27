@@ -13,6 +13,7 @@ await p.goto(`http://127.0.0.1:${server.address().port}/stage_anim.html`); await
 fs.mkdirSync(outDir, { recursive: true }); let cur = null;
 for (const f of T.frames) {
   if (f.n < +a || f.n > +bz) continue;
+  if (process.env.EVEN && f.n % 2) continue;
   const t0 = Date.now();
   if (cur !== f.shot) { await p.evaluate(j => window.job(j), { ...T.shots[f.shot].job, norender: true, w: T.w, h: T.h }); cur = f.shot; }
   await p.evaluate(x => window.frame(x), f);

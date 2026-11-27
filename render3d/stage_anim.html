@@ -48,7 +48,7 @@ const builders = {
   async lot(j) {
     sky.golden(); exposure(0.8); scene.environment = env; scene.environmentIntensity = 0.25; dyn.add(sunSprite(-14, 6, -60, 40)); makeLot(dyn);
     const van = makeVan(); H.van = van; place(van, j.vanX ?? 0.9, 0, -5.2, j.vanYaw ?? -0.1, 0.8); van.userData.wheels.forEach(w => w.rotation.z = -(j.wheel ?? 0.4));
-    const gig = buildGig(); H.gig = gig; setGigFace(gig, { eyes: 'eyes_open', mouth: 'mouth_chitter' }); setGigPose(gig, { head: [0, -70, 0], L: { sh: [60, 8], el: 40, curl: 1 }, R: { sh: [60, 8], el: 40, curl: 1 } }); van.add(gig.root); gig.root.position.set(2.5, 1.1, 1.0); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.85);
+    const gig = buildGig(); H.gig = gig; setGigFace(gig, { eyes: 'eyes_open', mouth: 'mouth_chitter' }); setGigPose(gig, { head: [0, -70, 0], L: { sh: [60, 8], el: 40, curl: 1 }, R: { sh: [60, 8], el: 40, curl: 1 } }); van.add(gig.root); gig.root.position.set(2.5, 1.1, 1.0); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.225);
     const tri = new THREE.Group(); const dkm = std(0x2a2833, { roughness: 0.5, metalness: 0.4 }); [0, 120, 240].forEach(a => { const r = a * Math.PI / 180; tri.add(legBetween([0, 1.25, 0], [Math.sin(r) * 0.62, 0.01, Math.cos(r) * 0.62], 0.014, dkm)); });
     tri.add(legBetween([0, 1.25, 0], [0, 1.43, 0], 0.02, dkm), legBetween([0, 1.43, 0], [0, 1.52, -0.01], 0.015, dkm));
     const RR = 0.23, CY = 1.64; const g1 = new THREE.Mesh(new THREE.TorusGeometry(RR, 0.03, 18, 72), new THREE.MeshBasicMaterial({ color: 0xfff6fb })); g1.position.set(0, CY, 0.02); const g2 = new THREE.Mesh(new THREE.TorusGeometry(RR, 0.022, 14, 72), dkm); g2.position.set(0, CY, -0.03);
@@ -74,7 +74,7 @@ const builders = {
   async street(j) {
     sky.day(); exposure(0.9); scene.environment = env; scene.environmentIntensity = 0.35; makeStreet(dyn);
     const stand = makeStand(); place(stand, 0, 0, -62, 0, 1.3); const sl = sunLight(0xfff0d8, 2.8, [10, 22, 12], [0, 0, -20], 40); dyn.add(new THREE.HemisphereLight(0xcfe4ff, 0x6a8a5a, 0.6));
-    const van = makeVan(); place(van, 0, 0, j.vanZ ?? -8, Math.PI / 2, 0.8); van.userData.wheels.forEach(w => w.rotation.z = -(j.wheel ?? 0.4)); const gig = buildGig(); setGigFace(gig, { eyes: 'eyes_wide', mouth: 'mouth_chitter' }); van.add(gig.root); gig.root.position.set(2.5, 1.1, 1.0); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.85);
+    const van = makeVan(); place(van, 0, 0, j.vanZ ?? -8, Math.PI / 2, 0.8); van.userData.wheels.forEach(w => w.rotation.z = -(j.wheel ?? 0.4)); const gig = buildGig(); setGigFace(gig, { eyes: 'eyes_wide', mouth: 'mouth_chitter' }); van.add(gig.root); gig.root.position.set(2.5, 1.1, 1.0); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.225);
     const guitar = makeGuitar(); guitar.scale.setScalar(0.9); van.add(guitar); guitar.position.set(1.4, 3.0, 1.6); guitar.rotation.set(0.1, 0, -1.2);
     if (j.nana !== false) { const n = await person('nana'); setPose(n, j.nanaPose ?? 'neutral'); setFace(n, { eyes: 'eyes_wide', brows: 'brows_high', mouth: 'mouth_shout' }); place(n.root, 0, 0, -62 - 0.65, 0, 1.3); }
     for (let i = 0; i < 9; i++) { const p = makePigeon(); p.position.set(-2 + Math.random() * 4, 1.2 + Math.random() * 2.2, (j.vanZ ?? -8) - 6 - Math.random() * 8); p.rotation.y = Math.PI / 2 + (Math.random() - 0.5) * 0.8; p.userData.wings.forEach((w, k) => w.rotation.x = (k ? 1 : -1) * (0.6 + Math.random() * 0.5)); dyn.add(p); }
@@ -87,10 +87,10 @@ const builders = {
   },
   async cab(j) {
     sky.day(); exposure(0.85); scene.environment = env; scene.environmentIntensity = 0.5; makeStreet(dyn); const stand = makeStand(); place(stand, 0, 0, -62, 0, 1.3);
-    const cab = new THREE.Group(); dyn.add(cab); cab.rotation.y = Math.PI / 2; cab.position.set(0, 0.55, 0); makeCab(cab);
+    const cab = new THREE.Group(); dyn.add(cab); cab.rotation.y = Math.PI / 2; cab.scale.setScalar(0.5); cab.position.set(0, 0.28, 0); makeCab(cab);
     const gig = buildGig(); H.gig = gig; setGigFace(gig, j.gigFace ?? { eyes: 'eyes_open', mouth: 'mouth_chitter' }); setGigPose(gig, { head: [0, 0, 0], L: { sh: [75, 6], el: 30, curl: 1 }, R: { sh: [75, 6], el: 30, curl: 1 }, legL: { hip: 85, knee: 80 }, legR: { hip: 85, knee: 80 }, tail: [20, 0] });
-    cab.add(gig.root); gig.root.position.set(-0.2, 1.05, -0.9); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.95);
-    const guitar = makeGuitar(); H.guitar = guitar; H.cab = cab; guitar.scale.setScalar(0.5); cab.add(guitar); guitar.position.set(-0.55, 1.95, 0.95); guitar.rotation.set(0, Math.PI / 2, 0.35);
+    cab.add(gig.root); gig.root.position.set(-0.2, 1.05, -0.9); gig.root.rotation.y = Math.PI / 2; gig.root.scale.setScalar(0.36);
+    const guitar = makeGuitar(); H.guitar = guitar; H.cab = cab; guitar.scale.setScalar(0.69); cab.add(guitar); guitar.position.set(-0.55, 1.95, 0.95); guitar.rotation.set(0, Math.PI / 2, 0.35);
     sunLight(0xfff0d8, 2.6, [12, 18, 6], [0, 1, 0], 16); dyn.add(new THREE.HemisphereLight(0xcfe4ff, 0x6a8a5a, 0.7)); const fill = new THREE.PointLight(0xfff4e0, 18, 12); fill.position.set(0.5, 3, 1.5); dyn.add(fill);
   },
   async character(j) {   // studio showcase for one character

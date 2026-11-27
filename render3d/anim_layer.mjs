@@ -13,14 +13,15 @@ const P = {
   idle: body({ yaw: 4, head: [0, 0, 2] }),
   rock: body({ yaw: -10, spine: [-6, -12, 0], head: [-6, 8, -8], L: { sh: [8, 38], el: 105, curl: OPEN }, R: { sh: [165, 18], el: 25, curl: [0.9, 0, 1, 1, 0] }, legL: leg(8, 24, 28), legR: leg(-6, 22, 20) }),
 };
-const SH = {   // camera keys: Dex stands 3.75 tall with face centre near y=2.85; van sits at z=-5.2
-  S1: { pos: [[0.5, 0.9, 7.2], [0.25, 1.1, 6.0]], look: [[-0.1, 2.0, 0], [0, 2.1, 0]], fov: 46 },
-  S2: { pos: [[0.25, 2.45, 3.4], [0.12, 2.4, 2.7]], look: [[0, 2.35, 0], [0, 2.3, 0]], fov: 38 },
-  S3: { pos: [[1.0, 2.2, 5.6], [0.5, 2.3, 4.9]], look: [[0, 2.35, 0], [0, 2.35, 0]], fov: 44 },
-  S4: { pos: [[-4.6, 2.6, 4.4], [-4.2, 2.6, 4.4]], look: [[1.0, 1.7, -2.0], [2.2, 1.7, -2.6]], fov: 44 },
-  S5: { pos: [[1.6, 3.1, -1.9], [1.35, 3.05, -1.7]], look: [[-0.9, 2.85, -0.3], [-0.9, 2.85, -0.3]], fov: 50 },
-  S7: { pos: [[1.1, 2.4, 5.6], [0.45, 2.45, 4.5]], look: [[0, 2.35, 0], [0.2, 2.4, 0]], fov: 44 },
-  S6: { pos: [[-8, 0.7, 3.0], [-7.4, 0.8, 2.8]], look: [[2.5, 1.6, -3], [3.5, 1.6, -3]], fov: 44 },
+const SH = {   // camera keys for a 1.78 m Dex (face centre about y=1.58), van 5.3 m long at z=-5.2
+  S1: { pos: [[0.4, 0.55, 4.1], [0.2, 0.7, 3.5]], look: [[-0.1, 1.0, 0], [0, 1.05, 0]], fov: 46 },
+  S8: { pos: [[0.75, 0.75, 3.1], [0.45, 0.95, 2.4]], look: [[0, 1.3, 0], [0, 1.45, 0]], fov: 44 },
+  S2: { pos: [[0.1, 1.62, 1.7], [0.06, 1.62, 1.25]], look: [[0, 1.6, 0], [0, 1.6, 0]], fov: 36 },
+  S3: { pos: [[0.5, 1.2, 3.0], [0.25, 1.25, 2.5]], look: [[0, 1.25, 0], [0, 1.28, 0]], fov: 44 },
+  S4: { pos: [[-3.0, 1.35, 3.0], [-2.8, 1.35, 3.0]], look: [[4.1, 0.9, -2.7], [5.4, 0.9, -3.2]], fov: 44 },
+  S7: { pos: [[0.6, 1.25, 3.0], [0.3, 1.3, 2.3]], look: [[0, 1.2, 0], [0.1, 1.25, 0]], fov: 44 },
+  S5: { pos: [[0.9, 1.6, -0.9], [0.75, 1.55, -0.8]], look: [[-0.45, 1.4, -0.1], [-0.45, 1.4, -0.1]], fov: 50 },
+  S6: { pos: [[-4.2, 0.45, 1.8], [-3.8, 0.5, 1.7]], look: [[2.0, 0.9, -1.5], [3.0, 0.9, -1.9]], fov: 44 },
 };
 export function install(E) {
   const { camera, renderer, scene, getH, setPose, setFace, setGigPose, setGigFace } = E;
@@ -33,7 +34,7 @@ export function install(E) {
     // ---- Dex
     if (H.dex) {
       let pose, face = { eyes: blink ? 'eyes_closed' : 'eyes_open', brows: 'brows_up', mouth: lip };
-      if (shot === 'S1') { pose = mix(P.wide, P.wideBig, clamp(emph)); pose.head = [pose.head[0] + amp * 3 + wob(0.8, 1.2), wob(0.6, 3), wob(0.5, 3)]; pose.spine = [pose.spine[0] + wob(0.35, 0.8) - amp * 2, wob(0.4, 3), 0]; pose.yaw = wob(0.3, 5); face.brows = emph > .3 ? 'brows_high' : 'brows_up'; face.eyes = blink ? 'eyes_closed' : (emph > .3 ? 'eyes_wide' : 'eyes_open'); }
+      if (shot === 'S1' || shot === 'S8') { pose = mix(P.wide, P.wideBig, clamp(emph)); pose.head = [pose.head[0] + amp * 3 + wob(0.8, 1.2), wob(0.6, 3), wob(0.5, 3)]; pose.spine = [pose.spine[0] + wob(0.35, 0.8) - amp * 2, wob(0.4, 3), 0]; pose.yaw = wob(0.3, 5); face.brows = emph > .3 ? 'brows_high' : 'brows_up'; face.eyes = blink ? 'eyes_closed' : (emph > .3 ? 'eyes_wide' : 'eyes_open'); }
       else if (shot === 'S2') { pose = mix(P.smug, P.smug, 0); pose.head = [wob(0.5, 1.5) + (k > .3 ? 4 : 0), wob(0.4, 3), 4 + wob(0.6, 2)]; pose.spine = [wob(0.35, 0.6), 0, 2]; face.eyes = blink ? 'eyes_closed' : (k > .35 ? 'eyes_wide' : 'eyes_open'); face.brows = k > .35 ? 'brows_high' : 'brows_smirk'; if (lip.startsWith('mouth_smile') || lip === 'mouth_closed_grin') face.mouth = k > .75 ? 'mouth_closed_grin' : 'mouth_closed_smirk'; }
       else if (shot === 'S3') { const up = ease(clamp((t - 0.35) / 0.35)); pose = mix(P.smug, P.thumb, up); pose.head = [pose.head[0] + amp * 3, pose.head[1] + wob(0.7, 3), pose.head[2]]; pose.spine = [pose.spine[0] + wob(0.4, 0.8), pose.spine[1], pose.spine[2]]; face.brows = 'brows_smirk'; if (lip === 'mouth_smile') face.mouth = 'mouth_closed_grin'; }
       else if (shot === 'S4') { pose = mix(P.idle, P.idle, 0); pose.head = [wob(0.4, 1), -6 + wob(0.3, 2), 2]; pose.spine = [wob(0.35, 0.8), 0, 0]; pose.yaw = 10 + wob(0.25, 3); face.brows = 'brows_smirk'; if (lip === 'mouth_smile') face.mouth = 'mouth_closed_grin'; }
