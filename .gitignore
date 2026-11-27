@@ -2,3 +2,4 @@ study/
 reference/
 *.mp4.part
 voice/
+render3d/node_modules/
