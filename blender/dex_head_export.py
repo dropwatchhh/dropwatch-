@@ -39,7 +39,7 @@ m_skin = simple('skin', (0.46, 0.21, 0.11, 1), 0.5); m_skinD = simple('skinD', (
 m_lipU = simple('lipU', (0.42, 0.10, 0.14, 1), 0.32); m_lipL = simple('lipL', (0.52, 0.14, 0.18, 1), 0.28)
 m_mouth = simple('mouthIn', (0.07, 0.01, 0.02, 1), 0.7); m_teeth = simple('teeth', (0.9, 0.86, 0.8, 1), 0.25); m_tongue = simple('tongue', (0.5, 0.1, 0.14, 1), 0.5)
 m_black = simple('black', (0.01, 0.008, 0.012, 1), 0.45); m_metal = simple('metal', (0.8, 0.82, 0.86, 1), 0.2, 1.0); m_white = simple('white', (0.9, 0.9, 0.88, 1), 0.5)
-m_under = simple('undercut', (0.05, 0.03, 0.09, 1), 0.9); m_teal = simple('hairT', (0.1, 0.5, 0.5, 1), 0.35); m_pink = simple('hairP', (0.6, 0.1, 0.3, 1), 0.35)
+m_under = simple('undercut', (0.004, 0.004, 0.007, 1), 0.22); m_teal = simple('hairT', (0.1, 0.5, 0.5, 1), 0.35); m_pink = simple('hairP', (0.6, 0.1, 0.3, 1), 0.35)
 m_brow = simple('brow', (0.003, 0.003, 0.005, 1), 0.3); m_lash = simple('lash', (0.005, 0.004, 0.006, 1), 0.4)
 # eye texture: front-facing planar iris/pupil/sclera, so it exports as a normal image texture
 def iris_image():
@@ -307,9 +307,9 @@ def scalp_sample(extra=0.0):
 # ---- glossy black rockstar gel spikes: 20-30 separate rigid wedge-shaped clumps, wide base, one sharp tip, pointing up and outward
 STYLE = argv[1] if len(argv) > 1 else 'A'
 CFG = {
-    'A': dict(n=26, dist=0.30, Lmin=0.42, Lmax=0.62, up=1.0, out=0.95, back=0.0, flat=0.55, Rb=(0.23, 0.28), bend=0.05, tall_top=0.16, alt=False),
-    'B': dict(n=24, dist=0.31, Lmin=0.40, Lmax=0.80, up=1.0, out=0.40, back=0.8, flat=0.42, Rb=(0.23, 0.29), bend=0.16, tall_top=0.30, alt=False),
-    'C': dict(n=28, dist=0.28, Lmin=0.34, Lmax=0.78, up=0.75, out=1.3, back=0.0, flat=0.62, Rb=(0.24, 0.30), bend=0.08, tall_top=0.24, alt=True),
+    'A': dict(n=26, dist=0.30, Lmin=0.42, Lmax=0.62, up=1.0, out=0.95, back=0.0, flat=0.55, Rb=(0.23, 0.28), bend=0.05, tall_top=0.16, alt=False, taper=0.88),
+    'B': dict(n=24, dist=0.31, Lmin=0.40, Lmax=0.80, up=1.0, out=0.40, back=0.8, flat=0.42, Rb=(0.23, 0.29), bend=0.16, tall_top=0.30, alt=False, taper=0.78),
+    'C': dict(n=28, dist=0.28, Lmin=0.34, Lmax=0.78, up=0.75, out=1.3, back=0.0, flat=0.62, Rb=(0.24, 0.30), bend=0.08, tall_top=0.24, alt=True, taper=0.72),
 }[STYLE]
 spikes = []
 tries = 0
@@ -335,10 +335,10 @@ def build_wedge(si, p, n):
     bm2 = bmesh.new(); rings = []; thetas = {}
     for ti in range(NT + 1):
         t = ti / NT; c = p - d * 0.08 + d * (L * t + 0.08) + bend * (t * t)
-        rw = Rb * (1 - t) ** 0.66 * (1 + 0.4 * math.exp(-t * 7.0)); rd = rw * CFG['flat'] * (1 - 0.15 * t); ring = []
+        rw = Rb * (1 - t) ** CFG['taper'] * (1 + 0.4 * math.exp(-t * 7.0)); rd = rw * CFG['flat'] * (1 - 0.15 * t); ring = []
         for k in range(K):
             th = 6.2832 * k / K; cs, sn = math.cos(th), math.sin(th)
-            m = 1 + (0.022 * math.sin(26 * th + 2 * t) + 0.015 * math.sin(43 * th - 3 * t)) * (1 - t ** 2)
+            m = 1 + (0.03 * math.sin(26 * th + 2 * t) + 0.02 * math.sin(43 * th - 3 * t)) * (1 - t ** 2)
             pos = c + wax * (sgn(cs) * abs(cs) ** 0.85) * rw * m + dep * (sgn(sn) * abs(sn) ** 0.85) * rd * m
             thetas[(ti, k)] = th; ring.append(bm2.verts.new(P(*pos)))
         rings.append(ring)
@@ -356,12 +356,13 @@ def build_wedge(si, p, n):
     for pl in me.polygons: pl.use_smooth = True
     ob = bpy.data.objects.new('wedge%d' % si, me); scene.collection.objects.link(ob); return ob
 for si, (p, n, a_, y) in enumerate(spikes): spike_objs.append(build_wedge(si, p, n))
-for _ in range(4200):
+for _ in range(0):  # no short under-layer strands: the glossy black scalp shell is the hair mass
+   
     a_, y = scalp_sample(0.0); p, n = head_pt(a_, y); l = HR.uniform(0.06, 0.14)
     dd = (n + V3(0, 0.45, 0) + V3(HR.uniform(-1, 1), HR.uniform(-1, 1), HR.uniform(-1, 1)) * 0.3).normalized()
     pts = [tuple(p - n * 0.03), tuple(p + dd * l * 0.5), tuple(p + dd * l + V3(0, -0.01, 0))]
     under[kind_at(p)].append((pts, [1.0, 0.75, 0.15]))
-for _ in range(1500):  # feathered baby hairs along the hairline, densest right at the edge, lying nearly flat
+for _ in range(0):  # (removed: no feathered hairs) baby hairs along the hairline, densest right at the edge, lying nearly flat
     a_ = HR.uniform(-math.pi * 0.97, math.pi * 0.97); dist = HR.expovariate(1 / 0.03)
     if dist > 0.12: continue
     y = hairline_y(a_) + dist; p, n = head_pt(a_, y); l = HR.uniform(0.03, 0.065)
