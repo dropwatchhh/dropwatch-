@@ -12,8 +12,8 @@ p.on('console', m => { if (m.type() === 'error') console.log('[page]', m.text().
 await p.goto(`http://127.0.0.1:${server.address().port}/stage_anim.html`); await p.waitForFunction('window.ready === true', null, { timeout: 120000 });
 fs.mkdirSync(outDir, { recursive: true }); let cur = null;
 for (const it of T.items) {
-  const key = JSON.stringify(it.scene); const t0 = Date.now();
-  if (key !== cur) { await p.evaluate(j => window.job(j), { ...it.scene, norender: true, w: T.w, h: T.h }); cur = key; }
+  const key = JSON.stringify(it.scene) + (it.scene.w ?? ''); const t0 = Date.now();
+  if (key !== cur) { await p.evaluate(j => window.job(j), { w: T.w, h: T.h, ...it.scene, norender: true }); cur = key; }
   await p.evaluate(x => window.lab(x), it.spec);
   const buf = await p.evaluate(() => document.querySelector('canvas').toDataURL('image/png').split(',')[1]);
   fs.writeFileSync(`${outDir}/${it.name}.png`, Buffer.from(buf, 'base64')); console.log('lab', it.name, Date.now() - t0, 'ms');

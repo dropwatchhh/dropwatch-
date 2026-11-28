@@ -75,8 +75,9 @@ export function install(E) {
           const reach = m === 'reach' ? sm2(0.0, 0.8, s.k ?? 1) : (m === 'crash' ? 0.6 : 0);
           let pit = th; if (m === 'crash' && ti > 0) pit = th - 26 * sm2(0, 0.3, ti) + 3 * Math.sin(ti * 14) * Math.exp(-ti * 3);
           const P = dragPose(reach, 0); P.pitch = pit; placeDrag(P, vz + 3.15, 0);
-          const e1 = A.ikArm(THREE, H.dex, 'L', gripL, -0.2); const tR = reach > 0.02 ? V(lerpN(-0.24, -0.3, reach), lerpN(0.9, 1.02, reach), lerpN(vz + 2.77, vz + 3.0, reach)) : gripR;
+          const e1 = A.ikArm(THREE, H.dex, 'L', gripL, -0.2); const tR = reach > 0.02 ? V(lerpN(-0.24, -0.37, reach), lerpN(0.9, 0.95, reach), lerpN(vz + 2.77, vz + 3.08, reach)) : gripR;
           const e2 = A.ikArm(THREE, H.dex, 'R', tR, -0.2);
+          if (s.dbgR) { const shR = V(0, 0, 0); H.dex.j.arms.R.sh.getWorldPosition(shR); const pr = V(0, -0.2, 0); H.dex.j.arms.R.wr.localToWorld(pr); console.error('RDBG ' + JSON.stringify({ shR: shR.toArray().map(v => +v.toFixed(2)), tgt: tR.toArray().map(v => +v.toFixed(2)), palm: pr.toArray().map(v => +v.toFixed(2)), err: +e2.toFixed(3), d: +shR.distanceTo(tR).toFixed(3) })); }
           { const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
           { const shL = V(0, 0, 0); H.dex.j.arms.L.sh.getWorldPosition(shL); const wr = V(0, -0.2, 0); H.dex.j.arms.L.wr.localToWorld(wr); const elb = V(0, 0, 0); H.dex.j.arms.L.el.getWorldPosition(elb); console.error('ACTCHK ' + JSON.stringify({ m, eL: +e1.toFixed(3), eR: +e2.toFixed(3), foot: +footMin(H.dex).toFixed(3), shL: shL.toArray().map(v => +v.toFixed(2)), el: elb.toArray().map(v => +v.toFixed(2)), palm: wr.toArray().map(v => +v.toFixed(2)), grip: gripL.toArray().map(v => +v.toFixed(2)), UA: +shL.distanceTo(elb).toFixed(3), rootZ: +H.dex.root.position.z.toFixed(2), vz: +vz.toFixed(2), rot: H.dex.j.arms.L.sh.rotation.toArray().slice(0, 3).map(v => +(v / D2R).toFixed(0)) })); }
           focusPt = V(0, 0.85, vz + 2.9);

@@ -4,11 +4,11 @@ from PIL import Image, ImageDraw, ImageFont
 F=lambda w,s: ImageFont.truetype(f"/usr/share/fonts/opentype/inter/Inter-{w}.otf", s)
 meta=json.load(open('full_meta.json')); TOTAL=meta['total']; FPS=12; NG=int(TOTAL*FPS)+1; FIRST=meta['first']; LAST=meta['last']
 OUT='/tmp/full_ov'; os.makedirs(OUT,exist_ok=True)
-CALLS=[(17.45,21.5,'LENA CHO'),(25.8,29.3,'NANA DOT'),(52.6,54.3,'LENA CHO')]
+CALLS=[(17.3,19.3,'LENA CHO'),(26.3,28.3,'NANA DOT'),(52.6,54.3,'LENA CHO')]
 CHAT=[(1.6,"mia.moon",(255,150,200),"he said ANYTHING lol"),(3.1,"bigmaple44",(255,210,90),"wait what is behind him"),(4.8,"noodle_nate",(255,170,110),"DEX BEHIND U"),(7.3,"mia.moon",(255,150,200),"THE VAN"),
       (22.4,"kai_k",(160,220,255),"BOOT"),(33.9,"priya_noodles",(255,190,120),"Dex your order's been ready for an hour"),(46.6,"mia.moon",(255,150,200),"NOT THE TULIPS"),(54.8,"bigmaple44",(255,210,90),"CHASE OR PLAY??")]
 CAPS=[(3.1,3.95,"ANYTHING"),(9.85,10.8,"THAT'S MY VAN?!"),(10.8,11.4,"GIG IS DRIVING"),(14.6,16.3,"NANA DOT'S FLOWERS"),(38.0,38.9,"GOT IT!"),(46.55,47.9,"OH NO"),(48.9,50.4,"OH YES")]
-BUBBLES=[(18.0,21.3,"LENA","Why is my headliner's guitar driving away?"),(26.4,29.3,"NANA DOT","That's HIS van? Oh, that boy."),(39.0,42.5,"LENA","Twelve seconds until that van meets a florist."),(43.0,44.9,"NANA DOT","BRAKE, you little bandit!"),(52.8,54.3,"LENA","Whatever you do, do it now.")]
+BUBBLES=[(17.6,21.0,"LENA","Why is my headliner's guitar driving away?"),(26.4,29.8,"NANA DOT","That's HIS van? Oh, that boy."),(39.0,42.5,"LENA","Twelve seconds until that van meets a florist."),(43.0,44.9,"NANA DOT","BRAKE, you little bandit!"),(52.8,54.3,"LENA","Whatever you do, do it now.")]
 def pill(d,b,fill): d.rounded_rectangle(b,radius=(b[3]-b[1])//2,fill=fill)
 def in_call(T): return next((c for c in CALLS if c[0]<=T<c[1]),None)
 def hud(d,T):
@@ -78,7 +78,8 @@ def base_path(g,suffix=''):
         if os.path.exists(p): return p
     return None
 def split(T,g):
-    L=Image.open(base_path(g,'L')).convert('RGB').crop((270,0,810,1920)); R=Image.open(base_path(g,'R')).convert('RGB').crop((270,0,810,1920))
+    Lp=f'/tmp/split_out/f{g:05d}L.png'; Rp=f'/tmp/split_out/f{g:05d}R.png'
+    L=Image.open(Lp).convert('RGB'); R=Image.open(Rp).convert('RGB')
     S=Image.new('RGB',(1080,1920)); S.paste(L,(0,0)); S.paste(R,(540,0)); d=ImageDraw.Draw(S); d.rectangle((536,0,544,1920),fill=(255,255,255))
     for x,txt,sub in ((270,"CHASE","grab the bumper"),(810,"PLAY","grab the guitar")):
         f=F("ExtraBold",100); w=d.textlength(txt,font=f); d.text((x-w/2,1560),txt,font=f,fill=(255,255,255),stroke_width=12,stroke_fill=(26,13,51))
@@ -89,11 +90,13 @@ if __name__=='__main__':
     for f in glob.glob(OUT+'/*.png'): os.remove(f)
     missing=0
     for g in range(NG):
-        T=g/FPS; p=base_path(g)
-        if p is None or not os.path.exists(p): missing+=1; p=base_path(max(g-1,0))
-        im=Image.open(p).convert('RGB')
-        if im.size!=(1080,1920): im=im.resize((1080,1920))
+        T=g/FPS
         if 50.0<=T<52.6 and SPLIT: im=split(T,g)
+        else:
+            p=base_path(g)
+            if p is None or not os.path.exists(p): missing+=1; p=base_path(max(g-1,0))
+            im=Image.open(p).convert('RGB')
+            if im.size!=(1080,1920): im=im.resize((1080,1920))
         if T>=59.1: im=vote(im,T)
         hudlayer(im,T).convert('RGB').save(f'{OUT}/{g:05d}.png')
     print('missing frames:',missing)

@@ -184,7 +184,7 @@ export function ikArm(THREE, rig, key, target, offY = -0.2, init) {
     }
     return { x, err: target.distanceTo(apply(x)) }; };
   const cur = init ?? [-a.sh.rotation.x / D, s * a.sh.rotation.z / D, -a.el.rotation.x / D];
-  const starts = [cur, [100, 20, 50], [150, 10, 20], [70, 30, 100], [120, 5, 70], [40, 15, 20]];
+  const starts = [cur, [100, 20, 50], [150, 10, 20], [70, 30, 100], [120, 5, 70], [40, 15, 20], [90, 40, 130], [60, 20, 140], [130, 30, 110], [110, 50, 120], [160, 20, 100]];
   let best = null; for (const st of starts) { const r = solve(st); if (!best || r.err < best.err) best = r; if (best.err < 2e-3) break; }
   apply(best.x); a._ikErr = best.err; return best.err;
 }

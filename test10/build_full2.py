@@ -80,14 +80,16 @@ def shot(T):
     return LS,{"anim":"act","m":"crash","ti":min(ti,1.8),"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[5.2,1.7,SZ+11.5],"look":[0,1.0,SZ+3.6],"fov":50}}
 def split_items(g):
     T=g/FPS; sp=dict(anim="act",m="reach",k=1.0,g=T,vanZ=off(T),vanG=T,mouth=mouth(T,'s29','mouth_closed_worried'))
-    L={**sp,"cam":{"rel":True,"pos":[1.9,0.95,1.0],"look":[0,0.05,0],"fov":32}}
-    R={**sp,"cam":{"rel":True,"pos":[-2.1,1.35,1.7],"look":[-0.2,0.4,0.2],"fov":38},"focusOverride":"neck"}
-    return [{"name":f"f{g:05d}L","scene":LS,"spec":L},{"name":f"f{g:05d}R","scene":LS,"spec":R}]
+    sc={**LS,"w":540,"h":1920}
+    L={**sp,"cam":{"rel":True,"pos":[2.3,0.1,0.25],"look":[0.24,0.05,-0.1],"fov":34}}
+    R={**sp,"cam":{"rel":True,"pos":[-2.3,-0.05,-0.15],"look":[-0.3,-0.08,-0.15],"fov":34},"focusOverride":"neck"}
+    return [{"name":f"f{g:05d}L","scene":sc,"spec":L},{"name":f"f{g:05d}R","scene":sc,"spec":R}]
 items=[]; G0=136; G1=int(59.1*FPS)
 for g in range(G0,G1+1):
     T=g/FPS; r=shot(T)
     if r is None: items+=split_items(g); continue
     sc,sp=r; items.append({"name":f"f{g:05d}","scene":sc,"spec":sp})
 json.dump({"w":1080,"h":1920,"items":items},open('/tmp/full2_items.json','w'))
+sp=[x for x in items if x['name'].endswith(('L','R'))]; json.dump({"w":540,"h":1920,"items":[x for x in sp if x['name'].endswith('L')]+[x for x in sp if x['name'].endswith('R')]},open('/tmp/split_items.json','w'))
 json.dump({"total":TOTAL,"cues":cues,"T0":T0,"first":G0,"last":G1,"SZ":SZ,"T_IMP":T_IMP},open('full_meta.json','w'))
 print(len(items),'items')
