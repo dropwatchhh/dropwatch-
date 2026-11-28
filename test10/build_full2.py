@@ -76,8 +76,8 @@ def shot(T):
     if T<55.9: return cab(T,54.3,"cover")
     if T<57.0: return LS,{"anim":"face","t":T-55.9,"mouth":mouth(T,'s33','mouth_grin_open'),"eyes":"eyes_wide","brows":"brows_smirk","cam":{"rel":True,"pos":[0.4,0.1,1.25],"look":[0,0,0],"fov":30}}
     ti=T-T_IMP
-    if T<58.1: return LS,{"anim":"act","m":"crash","ti":ti,"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[-5.0,1.3,SZ+3.9],"look":[-0.4,1.0,SZ+0.8],"fov":48}}
-    return LS,{"anim":"act","m":"crash","ti":min(ti,1.8),"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[5.6,2.6,SZ+10.0],"look":[0,0.9,SZ+3.0],"fov":50}}
+    if T<58.1: return LS,{"anim":"act","m":"crash","ti":ti,"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[-4.6,1.7,SZ+6.4],"look":[-1.0,0.9,SZ+0.4],"fov":56}}
+    return LS,{"anim":"act","m":"crash","ti":min(ti,1.8),"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[5.2,1.7,SZ+11.5],"look":[0,1.0,SZ+3.6],"fov":50}}
 def split_items(g):
     T=g/FPS; sp=dict(anim="act",m="reach",k=1.0,g=T,vanZ=off(T),vanG=T,mouth=mouth(T,'s29','mouth_closed_worried'))
     L={**sp,"cam":{"rel":True,"pos":[1.9,0.95,1.0],"look":[0,0.05,0],"fov":32}}

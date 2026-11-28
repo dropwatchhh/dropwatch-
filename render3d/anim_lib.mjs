@@ -91,11 +91,11 @@ export function nanaBrace(t, g) {   // goalkeeper: wide stance, knees bent, arms
   return base({ yaw: sw, spine: [-6 * k, 0, 0], head: [-4 * k, 0, 0], L: { sh: [lerp(8, 30, k), lerp(10, 78, k)], el: lerp(14, 30, k), curl: lerp(0.5, 0.1, k) ? OPEN : OPEN }, R: { sh: [lerp(8, 30, k), lerp(10, 78, k)], el: lerp(14, 30, k), curl: OPEN }, legL: { hip: [6 * k, 20 * k], knee: 22 * k }, legR: { hip: [6 * k, 20 * k], knee: 22 * k } });
 }
 export const nanaWave = (t, g) => base({ spine: [2, 0, 4], head: [0, 0, 4], R: { sh: [168, 28], el: 22 + 24 * Math.sin(g * 18), curl: OPEN }, L: { sh: [12, 12], el: 20, curl: RELAX } });
-export function nanaDuck(t, g = 0) {   // crouching dodge: knees deeply bent, back rounded a little, arms up over her head, head tucked, flinch shake
+export function nanaDuck(t, g = 0) {   // crouching dodge: knees bent, torso folded, arms up over her head, head tucked, flinch shake
   const k = sm(0, 0.3, t), sh = 1.5 * Math.sin(g * 26) * k;
-  return base({ yaw: sh, spine: [22 * k, 0, 4 * k], head: [26 * k, 0, 0], roll: 0,
+  return base({ yaw: 35 * k + sh, spine: [26 * k, 0, 4 * k], head: [22 * k, 0, 0],
     L: { sh: [lerp(8, 150, k), lerp(10, 22, k)], el: lerp(14, 128, k), curl: FIST }, R: { sh: [lerp(8, 150, k), lerp(10, 22, k)], el: lerp(14, 128, k), curl: FIST },
-    legL: { hip: [78 * k, 12 * k], knee: 122 * k }, legR: { hip: [78 * k, 12 * k], knee: 122 * k } });
+    legL: { hip: [64 * k, 14 * k], knee: 108 * k }, legR: { hip: [64 * k, 14 * k], knee: 108 * k } });
 }
 
 // ---------------- van, pigeons, tulips ----------------
@@ -113,11 +113,11 @@ export function pigeonFlock(THREE, makePigeon, n = 12, seed = 3) {
     const flap = fly ? Math.sin(u * 36 + q.ph) * 0.95 : 0.05 * Math.sin(tau * 3 + q.ph); q.b.userData.wings?.forEach((w, k) => { w.rotation.x = (k ? 1 : -1) * (0.15 + flap * (fly ? 1 : 0.2)); }); q.b.visible = true; } };
   return { group: grp, update, birds };
 }
-export function tulipBurst(THREE, n = 46, colors = [0xe8407a, 0xffd23f, 0xff7a3a, 0xb06cff], seed = 5) {
+export function tulipBurst(THREE, n = 110, colors = [0xe8407a, 0xffd23f, 0xff7a3a, 0xb06cff], seed = 5) {
   const grp = new THREE.Group(); let a = seed; const R = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
   const mats = colors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 })), stemM = new THREE.MeshStandardMaterial({ color: 0x4f8f3a }), items = [];
-  for (let i = 0; i < n; i++) { const t = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 6), stemM); st.position.y = 0.19; const hd = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mats[i % mats.length]); hd.scale.y = 1.35; hd.position.y = 0.4; t.add(st, hd); grp.add(t);
-    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.6 + R() * 3.2), 3.4 + R() * 3.4, -(0.6 + R() * 3.0)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (0.55 + R() * 0.7), 1.05, (R() - 0.5) * 0.4] }); }
+  for (let i = 0; i < n; i++) { const t = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.5, 6), stemM); st.position.y = 0.25; const hd = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), mats[i % mats.length]); hd.scale.y = 1.4; hd.position.y = 0.53; t.add(st, hd); grp.add(t);
+    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.2 + R() * 4.0), 4.0 + R() * 4.2, -(0.2 + R() * 1.6)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (0.55 + R() * 0.7), 1.05, (R() - 0.5) * 0.4] }); }
   const update = (tau) => { for (const q of items) { const u = Math.max(0, tau); q.t.visible = u > 0; q.t.position.set(q.p0[0] + q.v[0] * u, Math.max(0.02, q.p0[1] + q.v[1] * u - 4.9 * u * u), q.p0[2] + q.v[2] * u); q.t.rotation.set(q.spin[0] * u, q.spin[1] * u, q.spin[2] * u); } };
   return { group: grp, update };
 }
