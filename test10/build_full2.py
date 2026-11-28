@@ -44,14 +44,14 @@ def street_cam_act(T,m,cam,**kw):
     return LS,{"anim":"act","m":m,"vanZ":off(T),"vanG":T,"cam":cam,**kw}
 def shot(T):
     # ---------- lot
-    if T<13.3: u=T-11.3; return LOT,{"anim":"gait","mode":"jog","t":u,"dir":[1,0],"p0":[-1.5,2.0],"vanX":5.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s09','s10'],'mouth_shout'),"eyes":"eyes_wide","cam":{"rel":True,"pos":[2.0,1.0,3.3],"look":[0,0.9,0],"fov":44}}
+    if T<13.3: u=T-11.3; return LOT,{"anim":"gait","mode":"jog","t":u,"dir":[1,0],"p0":[-1.5,2.0],"vanX":5.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s09','s10'],'mouth_smile'),"eyes":"eyes_wide","cam":{"rel":True,"pos":[2.0,1.0,3.3],"look":[0,0.9,0],"fov":44}}
     if T<15.3: return cab(T,13.3,"drive")
-    if T<17.3: u=T-15.3; return LOT,{"anim":"gait","mode":"jog","t":u+1.0,"dir":[1,0],"p0":[-1.0,2.0],"vanX":6.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s12'],'mouth_shout'),"cam":{"rel":True,"pos":[-2.8,3.2,3.6],"look":[0.8,0.8,0],"fov":44}}
+    if T<17.3: u=T-15.3; return LOT,{"anim":"gait","mode":"jog","t":u+1.0,"dir":[1,0],"p0":[-1.0,2.0],"vanX":6.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s12'],'mouth_smile'),"cam":{"rel":True,"pos":[-2.8,3.2,3.6],"look":[0.8,0.8,0],"fov":44}}
     if T<19.3: return lena(T,17.3)
     if T<21.3: u=T-19.3; return LOT,{"anim":"gait","mode":"jog","phone":True,"t":u,"dir":[1,0],"p0":[-3.0,2.0],"vanX":4.0+2.0*u,"keepVan":True,"mouth":"mouth_closed_worried","cam":{"rel":True,"pos":[2.4,1.3,2.4],"look":[0,0.95,0],"fov":42}}
     if T<24.3:
         u=T-21.3; k=u/3.0; cam={"rel":True,"pos":[2.6,0.8,4.0],"look":[0,0.8,0],"fov":44} if T<22.8 else {"rel":True,"pos":[-1.8,1.0,3.2],"look":[0,0.8,0],"fov":44}
-        return LOT,{"anim":"boot2","k":k,"t":u,"dur":2.0,"dir":[1,0],"p0":[-3.0,2.0],"vanX":9.0+2.5*u,"keepVan":True,"mouth":mouth(T,'s14','mouth_shout'),"cam":cam}
+        return LOT,{"anim":"boot2","k":k,"t":u,"dur":2.0,"dir":[1,0],"p0":[-3.0,2.0],"vanX":9.0+2.5*u,"keepVan":True,"mouth":mouth(T,'s14','mouth_smile'),"cam":cam}
     # ---------- Maple Street
     if T<26.3: return LS,{"anim":"van","vanZ":off(T),"vanG":T,"hideDex":True,"cam":{"rel":True,"pos":[3.6,1.2,-4.6],"look":[0,1.0,0.6],"fov":46}}
     if T<28.3: return LS,{"anim":"nana","what":"watch","t":T-26.3,"g":T-26.3,"hideDex":True,"cam":{"rel":True,"pos":[1.1,0.95,3.0],"look":[0,0.05,0],"fov":34}}
@@ -60,12 +60,12 @@ def shot(T):
     zJ=lambda T:vz(T0)+5.88-2.7*(T-T0)
     if T<34.3: return street_cam_act(T,"jog",{"rel":True,"pos":[4.4,1.0,0.8],"look":[0,0.6,-1.8],"fov":50},tt=T-T0,dz=zJ(T),focusDz=-2.2,phone=True,eyes="eyes_open",brows="brows_up",mouth=mouth_any(T,['s20'],'mouth_smile'))
     if T<36.3: return street_cam_act(T,"jog",{"rel":True,"pos":[2.1,1.4,-2.4],"look":[0,1.0,0.3],"fov":42},tt=T-T0,dz=zJ(T),phone=True,eyes="eyes_open",brows="brows_up",mouth=mouth_any(T,['s20','s21'],'mouth_smile'))
-    if T<36.85: return street_cam_act(T,"jog",{"rel":True,"pos":[5.2,1.0,-0.2],"look":[0,0.3,0],"fov":42},tt=T-T0,dz=zJ(T),mouth=mouth(T,'s21','mouth_shout'))
+    if T<36.85: return street_cam_act(T,"jog",{"rel":True,"pos":[5.2,1.0,-0.2],"look":[0,0.3,0],"fov":42},tt=T-T0,dz=zJ(T),mouth=mouth(T,'s21','mouth_smile'))
     if T<T_GR:
         a=(T-36.85)/1.15; zP0=zJ(36.85); dz=zP0-2.7*min(T-36.85,0.345)*0.8
-        return street_cam_act(T,"jump",{"rel":True,"pos":[5.2,1.0,-0.2],"look":[0,0.3,0],"fov":42},a=a,dz=dz,mouth=mouth(T,'s22','mouth_shout'))
+        return street_cam_act(T,"jump",{"rel":True,"pos":[5.2,1.0,-0.2],"look":[0,0.3,0],"fov":42},a=a,dz=dz,mouth=mouth(T,'s22','mouth_closed_worried'))
     g=T
-    if T<40.0: return street_cam_act(T,"drag",{"rel":True,"pos":[3.4,0.9,0.6],"look":[0,0,0],"fov":42},g=g,mouth=mouth(T,'s22','mouth_shout'))
+    if T<40.0: return street_cam_act(T,"drag",{"rel":True,"pos":[3.4,0.9,0.6],"look":[0,0,0],"fov":42},g=g,mouth=mouth(T,'s22','mouth_closed_worried'))
     if T<42.0: return street_cam_act(T,"drag",{"rel":True,"pos":[1.7,1.0,0.6],"look":[0,0.05,-0.1],"fov":30},g=g,mouth="mouth_closed_worried")
     if T<44.0: return LS,{"anim":"nana","what":"brace","t":min(1,(T-42.0)/0.6),"g":T-42.0,"hideDex":True,"cam":{"rel":True,"pos":[1.1,0.95,3.0],"look":[0,0.05,0],"fov":34}}
     if T<46.0: return cab(T,44.0,"horn")
@@ -74,15 +74,17 @@ def shot(T):
     if T<52.6: return None   # split screen handled separately
     if T<54.3: return lena(T,52.6,off0=2.4)
     if T<55.9: return cab(T,54.3,"cover")
-    if T<57.0: return LS,{"anim":"face","t":T-55.9,"mouth":mouth(T,'s33','mouth_grin_open'),"eyes":"eyes_wide","brows":"brows_smirk","cam":{"rel":True,"pos":[0.4,0.1,1.25],"look":[0,0,0],"fov":30}}
+    if T<56.95: return LS,{"anim":"face","t":T-55.9,"mouth":mouth(T,'s33','mouth_grin_open'),"eyes":"eyes_wide","brows":"brows_smirk","cam":{"rel":True,"pos":[0.4,0.1,1.25],"look":[0,0,0],"fov":30}}
     ti=T-T_IMP
-    if T<58.1: return LS,{"anim":"act","m":"crash","ti":ti,"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[-4.6,1.7,SZ+6.4],"look":[-1.0,0.9,SZ+0.4],"fov":56}}
-    return LS,{"anim":"act","m":"crash","ti":min(ti,1.8),"g":T,"vanZ":off(T),"vanG":T,"mouth":mouth(T,'s33','mouth_grin_open'),"cam":{"pos":[5.2,1.7,SZ+11.5],"look":[0,1.0,SZ+3.6],"fov":50}}
+    base=dict(anim="act",m="crash",ti=ti,g=T,vanZ=off(T),vanG=T,mouth=mouth(T,'s33','mouth_grin_open'))
+    if T<57.8: return LS,{**base,"cam":{"pos":[2.5,1.0,SZ+3.6],"look":[0.0,1.0,SZ+0.1],"fov":52}}            # van nose hits the stand, buckets and tulips burst toward the camera
+    if T<58.45: return LS,{**base,"focusOverride":"nana","cam":{"rel":True,"pos":[1.5,0.75,2.0],"look":[0,0.15,0],"fov":42}}   # Nana Dot's crouching dodge, tulips raining
+    return LS,{**base,"cam":{"rel":True,"pos":[-1.9,0.55,2.5],"look":[0.1,0.1,-0.2],"fov":46}}                       # Dex hanging on the bumper, guitar hanging within reach (default focus = hands)
 def split_items(g):
     T=g/FPS; sp=dict(anim="act",m="reach",k=1.0,g=T,vanZ=off(T),vanG=T,mouth=mouth(T,'s29','mouth_closed_worried'))
     sc={**LS,"w":540,"h":1920}
     L={**sp,"cam":{"rel":True,"pos":[2.3,0.1,0.25],"look":[0.24,0.05,-0.1],"fov":34}}
-    R={**sp,"cam":{"rel":True,"pos":[-2.3,-0.05,-0.15],"look":[-0.3,-0.08,-0.15],"fov":34},"focusOverride":"neck"}
+    R={**sp,"cam":{"rel":True,"pos":[1.0,0.6,0.5],"look":[0,0,0],"fov":34},"focusOverride":"neck"}
     return [{"name":f"f{g:05d}L","scene":sc,"spec":L},{"name":f"f{g:05d}R","scene":sc,"spec":R}]
 items=[]; G0=136; G1=int(59.1*FPS)
 for g in range(G0,G1+1):

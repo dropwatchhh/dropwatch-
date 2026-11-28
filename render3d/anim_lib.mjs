@@ -81,7 +81,7 @@ export function ikPaw(THREE, gig, key, target, init) {
 }
 
 // ---------------- Nana Dot ----------------
-export const nanaWatch = (t) => base({ yaw: 3 * Math.sin(t * 1.3), spine: [3 + 0.8 * Math.sin(t * 2.2), 2 * Math.sin(t * 1.3), 2.5 * Math.sin(t * 1.3)], head: [10 + 2 * Math.sin(t * 3), 5 * Math.sin(t * 1.1), 5 + 3 * Math.sin(t * 1.7)], L: { sh: [10, 36], el: 104, curl: FIST }, R: { sh: [62, 12], el: 108, curl: [0.45, 1.1, 1.12, 1.14, 1.15], phone: true, roll: -30 }, legL: { hip: [4, 8 + 2 * Math.sin(t * 1.3)], knee: 6 }, legR: { hip: [-4, 3], knee: 14 + 4 * Math.sin(t * 1.3) } });
+export const nanaWatch = (t) => base({ yaw: 3 * Math.sin(t * 1.3), spine: [3 + 0.8 * Math.sin(t * 2.2), 2 * Math.sin(t * 1.3), 2.5 * Math.sin(t * 1.3)], head: [10 + 2 * Math.sin(t * 3), 5 * Math.sin(t * 1.1), 5 + 3 * Math.sin(t * 1.7)], L: { sh: [10, 36], el: 104, curl: FIST }, R: { sh: [62, 12], el: 108, curl: [0.6, 0.9, 0.92, 0.95, 0.95], phone: true, roll: -30, phoneCfg: { x: 0.082, y: -0.13, z: -0.015, rz: 0.3 } }, legL: { hip: [4, 8 + 2 * Math.sin(t * 1.3)], knee: 6 }, legR: { hip: [-4, 3], knee: 14 + 4 * Math.sin(t * 1.3) } });
 export function nanaPutDown(t) {   // holding the watering can, bends, sets it down, straightens
   const down = sm(0.1, 0.5, t) * (1 - sm(0.62, 0.95, t));
   return base({ spine: [28 * down, 0, 0], head: [-6 * down, 0, 0], R: { sh: [lerp(24, 52, down), 14], el: lerp(40, 22, down), curl: FIST }, L: { sh: [lerp(8, 30, down), 10], el: lerp(14, 40, down), curl: RELAX }, legL: { hip: [10 * down, 6], knee: 22 * down }, legR: { hip: [10 * down, 6], knee: 22 * down } });

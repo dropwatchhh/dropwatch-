@@ -305,6 +305,7 @@ export function setPose(rig, spec) {
     const cu = q.curl;
     a.fingers.forEach(([f1, f2], i) => { const c = cu[i + 1]; f1.rotation.z = -s * c * 1.25; f2.rotation.z = -s * c * 1.35; f1.rotation.x = (i - 1.5) * 0.17 * (1 - c); });
     a.prop.visible = !!q.prop; a.phone.visible = !!q.phone; a.wr.rotation.y = s * (q.roll ?? 0) * D;
+    if (q.phone && q.phoneCfg) { const c = q.phoneCfg, ph = a.phone; ph.position.set(-s * c.x, c.y, c.z); ph.rotation.set(c.rx ?? 0, c.ry ?? 0, -s * c.rz); }
     a.th[0].rotation.z = -s * (0.15 + cu[0] * 0.7); a.th[1].rotation.z = -s * cu[0] * 0.9;
   }
   let hmax = 0;
