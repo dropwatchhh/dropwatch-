@@ -5,9 +5,9 @@ F=lambda w,s: ImageFont.truetype(f"/usr/share/fonts/opentype/inter/Inter-{w}.otf
 meta=json.load(open('full_meta.json')); TOTAL=meta['total']; FPS=12; NG=int(TOTAL*FPS)+1; FIRST=meta['first']; LAST=meta['last']
 OUT='/tmp/full_ov'; os.makedirs(OUT,exist_ok=True)
 CALLS=[(17.3,19.3,'LENA CHO'),(26.3,28.3,'NANA DOT'),(52.6,54.3,'LENA CHO')]
-CHAT=[(1.6,"mia.moon",(255,150,200),"he said ANYTHING lol"),(3.1,"bigmaple44",(255,210,90),"wait what is behind him"),(4.8,"noodle_nate",(255,170,110),"DEX BEHIND U"),(7.3,"mia.moon",(255,150,200),"THE VAN"),
+CHAT=[(1.6,"mia.moon",(255,150,200),"he said ANYTHING lol"),(3.1,"bigmaple44",(255,210,90),"wait what is behind him"),(4.8,"noodle_nate",(255,170,110),"DEX BEHIND U"),(7.3,"mia.moon",(255,150,200),"THE VAN"),(11.8,"kai_k",(160,220,255),"THAT'S HIS ONLY GUITAR"),
       (22.4,"kai_k",(160,220,255),"BOOT"),(33.9,"priya_noodles",(255,190,120),"Dex your order's been ready for an hour"),(46.6,"mia.moon",(255,150,200),"NOT THE TULIPS"),(54.8,"bigmaple44",(255,210,90),"CHASE OR PLAY??")]
-CAPS=[(3.1,3.95,"ANYTHING"),(9.85,10.8,"THAT'S MY VAN?!"),(10.8,11.4,"GIG IS DRIVING"),(14.6,16.3,"NANA DOT'S FLOWERS"),(38.0,38.9,"GOT IT!"),(46.55,47.9,"OH NO"),(48.9,50.4,"OH YES")]
+CAPS=[(3.1,3.95,"ANYTHING"),(11.4,13.2,"HIS ONLY GUITAR"),(9.85,10.8,"THAT'S MY VAN?!"),(10.8,11.4,"GIG IS DRIVING"),(14.6,16.3,"NANA DOT'S FLOWERS"),(38.0,38.9,"GOT IT!"),(46.55,47.9,"OH NO"),(48.9,50.4,"OH YES")]
 BUBBLES=[(17.6,21.0,"LENA","Why is my headliner's guitar driving away?"),(26.4,29.8,"NANA DOT","That's HIS van? Oh, that boy."),(39.0,42.5,"LENA","Twelve seconds until that van meets a florist."),(43.0,44.9,"NANA DOT","BRAKE, you little bandit!"),(52.8,54.3,"LENA","Whatever you do, do it now.")]
 def pill(d,b,fill): d.rounded_rectangle(b,radius=(b[3]-b[1])//2,fill=fill)
 def in_call(T): return next((c for c in CALLS if c[0]<=T<c[1]),None)

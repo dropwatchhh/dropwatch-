@@ -15,8 +15,7 @@ export function install(E) {
     else if (H.van && H.dex) {   // van state for chase animations
       const vs = A.vanState(s.vanG ?? 0); H.van.position.set(0, vs.y, vanZ0 + (s.vanZ ?? 0)); H.van.rotation.z = vs.pitch; H.van.userData.wheels.forEach(w => { w.rotation.z = -(s.vanZ ?? 0) / 0.34; });
     }
-    if (H.dex) H.dex.root.visible = !s.hideDex;
-    if (H.vguitar && H.van) H.vguitar.position.set(0.55, 1.3, H.van.position.z + 2.95);
+    if (H.dex) { H.dex.root.visible = !s.hideDex; if (H.dex.bootParts) setBoot(H.dex, 'L', !s.noBootL); }
     const vz = H.van ? H.van.position.z : 0, rear = rearOf(vz);
     const face = s.face ?? {};
     if (H.pigeons) H.pigeons.group.visible = s.anim === 'van'; if (H.tulips) H.tulips.group.visible = s.anim === 'van';
@@ -164,7 +163,7 @@ export function install(E) {
       case 'van': { if (s.pigeonZ !== undefined && H.pigeons) H.pigeons.group.position.set(0, 0, s.pigeonZ); H.pigeons?.update(s.pigeonT ?? -1); H.tulips?.update(s.tulipT ?? -1); focus = V(0, 1, vz); break; }
     }
     if (s.pigeonT !== undefined) H.pigeons?.update(s.pigeonT); if (s.tulipT !== undefined) H.tulips?.update(s.tulipT);
-    if (H.sun) { H.sun.target.position.set(focus.x, 0, focus.z); H.sun.position.set(focus.x + 10, 22, focus.z + 12); H.sun.target.updateMatrixWorld(); }
+    if (H.sun) { H.sun.target.position.set(focus.x, 0, focus.z); H.sun.position.set(focus.x - 13, 9, focus.z - 11); H.sun.target.updateMatrixWorld(); }
     scene.updateMatrixWorld(true);
     const c = s.cam; if (c.rel) { camera.position.set(focus.x + c.pos[0], focus.y + c.pos[1], focus.z + c.pos[2]); camera.lookAt(focus.x + (c.look?.[0] ?? 0), focus.y + (c.look?.[1] ?? 0), focus.z + (c.look?.[2] ?? 0)); } else { camera.position.set(...c.pos); camera.lookAt(...c.look); }
     camera.fov = c.fov ?? 40; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); renderer.render(scene, camera);

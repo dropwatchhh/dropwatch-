@@ -44,7 +44,7 @@ def street_cam_act(T,m,cam,**kw):
     return LS,{"anim":"act","m":m,"vanZ":off(T),"vanG":T,"cam":cam,**kw}
 def shot(T):
     # ---------- lot
-    if T<13.3: u=T-11.3; return LOT,{"anim":"gait","mode":"jog","t":u,"dir":[1,0],"p0":[-1.5,2.0],"vanX":5.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s09','s10'],'mouth_smile'),"eyes":"eyes_wide","cam":{"rel":True,"pos":[2.0,1.0,3.3],"look":[0,0.9,0],"fov":44}}
+    if T<13.3: u=T-11.3; return LOT,{"anim":"gait","mode":"jog","t":u,"dir":[1,0],"p0":[-4.2,-4.5],"vanX":2.6+2.2*u,"keepVan":True,"mouth":mouth_any(T,['s09','s10'],'mouth_shout'),"eyes":"eyes_wide","brows":"brows_angry","cam":{"rel":True,"pos":[-2.7,1.2,0.5],"look":[3.6,1.0,-0.4],"fov":42}}   # SETUP: behind Dex, the van rolling away with HIS ONLY GUITAR strapped on the back
     if T<15.3: return cab(T,13.3,"drive")
     if T<17.3: u=T-15.3; return LOT,{"anim":"gait","mode":"jog","t":u+1.0,"dir":[1,0],"p0":[-1.0,2.0],"vanX":6.0+3.0*u,"keepVan":True,"mouth":mouth_any(T,['s12'],'mouth_smile'),"cam":{"rel":True,"pos":[-2.8,3.2,3.6],"look":[0.8,0.8,0],"fov":44}}
     if T<19.3: return lena(T,17.3)
@@ -90,7 +90,9 @@ items=[]; G0=136; G1=int(59.1*FPS)
 for g in range(G0,G1+1):
     T=g/FPS; r=shot(T)
     if r is None: items+=split_items(g); continue
-    sc,sp=r; items.append({"name":f"f{g:05d}","scene":sc,"spec":sp})
+    sc,sp=r
+    if T>=22.3 and sp.get('anim') in ('act','gait'): sp['noBootL']=True
+    items.append({"name":f"f{g:05d}","scene":sc,"spec":sp})
 json.dump({"w":1080,"h":1920,"items":items},open('/tmp/full2_items.json','w'))
 sp=[x for x in items if x['name'].endswith(('L','R'))]; json.dump({"w":540,"h":1920,"items":[x for x in sp if x['name'].endswith('L')]+[x for x in sp if x['name'].endswith('R')]},open('/tmp/split_items.json','w'))
 json.dump({"total":TOTAL,"cues":cues,"T0":T0,"first":G0,"last":G1,"SZ":SZ,"T_IMP":T_IMP},open('full_meta.json','w'))

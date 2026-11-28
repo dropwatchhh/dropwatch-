@@ -38,6 +38,11 @@ export function makeVan(opts = {}) {
   // stickers + band logo (original) on the side
   const decal = tex(cv(512, 256, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#1fe6d2'; c.font = '900 92px Inter, sans-serif'; c.textAlign = 'center'; c.fillText('HOLLOW', w / 2, 120); c.fillStyle = '#ff2fa0'; c.fillText('VAN', w / 2, 220); }));
   for (const z of [1.58, -1.58]) { const d = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.0), new THREE.MeshBasicMaterial({ map: decal, transparent: true })); d.position.set(-0.7, 1.55, z); if (z < 0) d.rotation.y = Math.PI; g.add(d); }
+  { // HIS ONLY GUITAR: strapped across the rear door, body on the right, neck toward the left, with two straps and a red tape band
+    const gt = makeGuitar(); gt.scale.setScalar(0.775); gt.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0))); gt.position.set(-3.69, 1.625, 0.69); gt.name = 'rearGuitar'; g.add(gt);
+    const strap = std(0x1c1b22, { roughness: 0.9 }); for (const zz of [-0.1, -0.78]) { const sb = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.36, 0.1), strap); sb.position.set(-3.62, 1.625, zz); g.add(sb); }
+    const sb2 = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.42), strap); sb2.position.set(-3.62, 1.95, 0.55); g.add(sb2); const sb3 = sb2.clone(); sb3.position.y = 1.3; g.add(sb3);
+  }
   g.userData.wheels = wheels; return g;
 }
 
