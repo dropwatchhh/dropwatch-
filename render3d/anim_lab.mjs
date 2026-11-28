@@ -15,6 +15,8 @@ export function install(E) {
     else if (H.van && H.dex) {   // van state for chase animations
       const vs = A.vanState(s.vanG ?? 0); H.van.position.set(0, vs.y, vanZ0 + (s.vanZ ?? 0)); H.van.rotation.z = vs.pitch; H.van.userData.wheels.forEach(w => { w.rotation.z = -(s.vanZ ?? 0) / 0.34; });
     }
+    if (H.dex) H.dex.root.visible = !s.hideDex;
+    if (H.vguitar && H.van) H.vguitar.position.set(-0.3, 1.0, H.van.position.z + 2.4);
     const vz = H.van ? H.van.position.z : 0, rear = rearOf(vz);
     const face = s.face ?? {};
     if (H.pigeons) H.pigeons.group.visible = s.anim === 'van'; if (H.tulips) H.tulips.group.visible = s.anim === 'van';
@@ -58,6 +60,52 @@ export function install(E) {
         const sp = 4.2, p = A.stridePhase(t * 1.0, sp); { const P = A.bootLoss(clampT(s.k), p); P.yaw = 180; setPose(H.dex, P); } setBoot(H.dex, 'L', clampT(s.k) < 0.34); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: s.mouth ?? 'mouth_shout' });
         const z0 = -sp * t; H.dex.root.position.set(0, H.dex.root.position.y, z0); fixGround(H.dex); focus = V(0, 1.0, z0);
         const b = H.boot, k = clampT(s.k); if (k >= 0.34) { const u = (k - 0.34) * (s.dur ?? 1.4); b.visible = true; b.position.set(-0.1 + 0.2 * u, 0.5 + 2.6 * u - 4.9 * u * u * 1.0, z0 + 0.4 - 4.2 * u); b.rotation.set(6 * u, 1.2 * u, 3 * u); if (b.position.y < 0.05) b.position.y = 0.05; } else b.visible = false; break; }
+      case 'act': {   // unified Maple Street action: jog -> plant -> jump -> grab -> drag -> reach -> crash-hang. s: {m, tt, g, vanOff, focus, mouth, reach, ti}
+        const D2R = Math.PI / 180; const m = s.m, S = H.dex.root.scale.x, vz = H.van.position.z, g = s.g ?? 0, th = s.pitch ?? 36, ti = s.ti ?? -1;
+        const gripL = V(0.24, 0.9, vz + 2.77), gripR = V(-0.24, 0.9, vz + 2.77), neck = V(-0.3, 1.02, vz + 3.0);
+        const FIST = [0.75, 0.9, 0.92, 0.94, 0.95], GUIT = [0.55, 0.85, 0.88, 0.9, 0.92];
+        const shoulders = () => { const a = V(0, 0, 0), c = V(0, 0, 0); H.dex.j.arms.L.sh.getWorldPosition(a); H.dex.j.arms.R.sh.getWorldPosition(c); return a.add(c).multiplyScalar(0.5); };
+        const dragPose = (reach, bounce) => ({ yaw: 180, pitch: th, spine: [-4, 2 * Math.sin(g * 5), 0], head: [-36 - 6 * reach, 3 * Math.sin(g * 6), 0],
+          L: { sh: [150, 10], el: 40, curl: FIST }, R: { sh: [150, 10], el: 40, curl: reach > 0.05 ? GUIT : FIST },
+          legL: { hip: [-8 + 14 * Math.sin(g * 9), 5], knee: 28 + 24 * Math.max(0, Math.sin(g * 9)), foot: -th * 0.8 }, legR: { hip: [-8 + 14 * Math.sin(g * 9 + 2.6), 5], knee: 28 + 24 * Math.max(0, Math.sin(g * 9 + 2.6)), foot: -th * 0.8 } });
+        const placeDrag = (P, shZ, shY) => { setPose(H.dex, P); H.dex.root.rotation.y = Math.PI; H.dex.root.position.set(0.0, 0, vz + 3.9); H.dex.root.updateMatrixWorld(true);
+          for (let k = 0; k < 2; k++) { const sh = shoulders(); H.dex.root.position.z += shZ - sh.z; H.dex.root.updateMatrixWorld(true); fixGround(H.dex); } };
+        let focusPt = V(0, 0.9, vz + 3);
+        if (m === 'drag' || m === 'reach' || m === 'crash') {
+          const reach = m === 'reach' ? sm2(0.0, 0.8, s.k ?? 1) : (m === 'crash' ? 0.6 : 0);
+          let pit = th; if (m === 'crash' && ti > 0) pit = th - 26 * sm2(0, 0.3, ti) + 3 * Math.sin(ti * 14) * Math.exp(-ti * 3);
+          const P = dragPose(reach, 0); P.pitch = pit; placeDrag(P, vz + 3.15, 0);
+          const e1 = A.ikArm(THREE, H.dex, 'L', gripL, -0.2); const tR = reach > 0.02 ? V(lerpN(-0.24, -0.3, reach), lerpN(0.9, 1.02, reach), lerpN(vz + 2.77, vz + 3.0, reach)) : gripR;
+          const e2 = A.ikArm(THREE, H.dex, 'R', tR, -0.2);
+          { const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
+          { const shL = V(0, 0, 0); H.dex.j.arms.L.sh.getWorldPosition(shL); const wr = V(0, -0.2, 0); H.dex.j.arms.L.wr.localToWorld(wr); const elb = V(0, 0, 0); H.dex.j.arms.L.el.getWorldPosition(elb); console.error('ACTCHK ' + JSON.stringify({ m, eL: +e1.toFixed(3), eR: +e2.toFixed(3), foot: +footMin(H.dex).toFixed(3), shL: shL.toArray().map(v => +v.toFixed(2)), el: elb.toArray().map(v => +v.toFixed(2)), palm: wr.toArray().map(v => +v.toFixed(2)), grip: gripL.toArray().map(v => +v.toFixed(2)), UA: +shL.distanceTo(elb).toFixed(3), rootZ: +H.dex.root.position.z.toFixed(2), vz: +vz.toFixed(2), rot: H.dex.j.arms.L.sh.rotation.toArray().slice(0, 3).map(v => +(v / D2R).toFixed(0)) })); }
+          focusPt = V(0, 0.85, vz + 2.9);
+        } else if (m === 'jog') {
+          const gt = A.gait(s.tt, 'jog', S), P = gt.pose; P.yaw = 180 + gt.yaw; if (s.phone) { P.R = { sh: [62, 16], el: 108, curl: [0.45, 1.1, 1.12, 1.14, 1.15], phone: true, roll: -35 }; P.head = [P.head[0] + 4, P.head[1], 0]; }
+          setPose(H.dex, P); H.dex.root.position.set(0, gt.rootY, s.dz); H.dex.root.updateMatrixWorld(true); { const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
+          focusPt = V(0, 0.9, s.dz + (s.focusDz ?? 0));
+        } else if (m === 'jump') {   // plant (0..0.3), flight (0.3..1) to the bumper
+          const a = s.a, pl = Math.min(1, a / 0.3), fl = Math.max(0, (a - 0.3) / 0.7), e = fl * fl * (3 - 2 * fl);
+          const gt = A.gait(1.6, 'jog', S), P = gt.pose; P.yaw = 180;
+          const crouchP = { spine: [22, 0, 0], head: [-10, 0, 0], L: { sh: [70, 10], el: 90, curl: [0.8, 1, 1, 1, 1] }, R: { sh: [70, 10], el: 90, curl: [0.8, 1, 1, 1, 1] }, legL: { hip: [52, 4], knee: 92 }, legR: { hip: [52, 4], knee: 92 } };
+          const flyP = dragPose(0, 0); flyP.pitch = th; flyP.L.sh = [170, 8]; flyP.R.sh = [170, 8]; flyP.L.el = 10; flyP.R.el = 10;
+          let Q = fl <= 0 ? A.mixPose(P, { ...P, ...crouchP, yaw: 180 }, sm2(0, 1, pl)) : A.mixPose({ ...P, ...crouchP, yaw: 180 }, flyP, e);
+          Q.yaw = 180; Q.pitch = fl <= 0 ? 0 : th * e; setPose(H.dex, Q); H.dex.root.rotation.y = Math.PI;
+          const zP = s.dz, zE = vz + 3.9, z = fl <= 0 ? zP : lerpN(zP, zE, Math.pow(fl, 1.4)); H.dex.root.position.set(0, 0, z); H.dex.root.updateMatrixWorld(true); fixGround(H.dex);
+          if (fl > 0) { H.dex.root.position.y += 0.9 * 4 * fl * (1 - fl) * (1 - 0.3 * fl); H.dex.root.updateMatrixWorld(true);
+            const w = Math.pow(fl, 2), sh = shoulders(); const tL = V(0, 0, 0).lerpVectors(sh.clone().add(V(-0.2, 0.1, -0.5)), gripL, w), tR2 = V(0, 0, 0).lerpVectors(sh.clone().add(V(0.2, 0.1, -0.5)), gripR, w); A.ikArm(THREE, H.dex, 'L', tL, -0.2); A.ikArm(THREE, H.dex, 'R', tR2, -0.2); }
+          focusPt = V(0, 0.9, H.dex.root.position.z);
+        }
+        setFace(H.dex, { eyes: s.eyes ?? 'eyes_wide', brows: s.brows ?? 'brows_angry', mouth: s.mouth ?? 'mouth_shout' });
+        // crash bits: bucket flight, tulips, Nana dodge
+        if (m === 'crash' || s.nanaDodge !== undefined) { const nn = H.nana; if (nn) { const d = Math.max(0, (s.nanaDodge ?? ti) + 0.35); setPose(nn, A.nanaDuck(Math.min(1, d / 0.5), g)); setFace(nn, { eyes: d > 0.05 ? 'eyes_closed' : 'eyes_wide', brows: 'brows_worried', mouth: 'mouth_shout' }); } }
+        if (H.stand && H.stand.userData.buckets) for (const bk of H.stand.userData.buckets) { if (!bk.userData.p0) { bk.updateMatrixWorld(true); scene.attach(bk); bk.userData.p0 = bk.position.clone(); bk.userData.q0 = bk.quaternion.clone(); bk.userData.v = V(bk.position.x > H.stand.position.x ? 1 : -1, 0, 0); }
+          const u = Math.max(0, ti), p0 = bk.userData.p0; const side = bk.userData.v.x; const hit = Math.abs(p0.x - H.stand.position.x) < 1.2 && u > 0;
+          if (hit) { bk.position.set(p0.x + side * 2.6 * u, p0.y + 3.6 * u - 4.9 * u * u * 0.8, p0.z - 1.2 * u); if (bk.position.y < 0.05) bk.position.y = 0.05; bk.rotation.set(5 * u * side, 2 * u, 7 * u * side); } else { bk.position.copy(p0); bk.quaternion.copy(bk.userData.q0); } }
+        if (H.tulips) { H.tulips.group.visible = true; H.tulips.group.position.set(H.stand.position.x, 0, H.stand.position.z + 0.15); H.tulips.update(Math.max(-1, ti) * 1.0); }
+        if (H.pigeons) H.pigeons.group.visible = false;
+        if (s.mode2 === undefined) { const mm = s.focusOverride; if (mm === 'van') focusPt = V(0, 1.0, vz); else if (mm === 'nose') focusPt = V(0, 1.0, vz - 2.6); else if (mm === 'stand') focusPt = V(H.stand.position.x, 0.9, H.stand.position.z); else if (mm === 'nana') focusPt = V(-2.1, 0.9, H.stand.position.z + 0.4); else if (mm === 'hands') focusPt = V(0, 0.85, vz + 2.8); else if (mm === 'neck') focusPt = V(0.3, 1.1, vz + 3.2); }
+        focus = focusPt; break; }
       case 'chase': {   // IK jog up behind the moving van, plant, jump, grab the bumper, get dragged (continuous, with overlapping head/arm lag)
         const tt = s.tt, S = H.dex.root.scale.x, bump = H.van.position.z + 2.88, vJog = A.GAITS.jog.v, GAP = 3.0;
         const zRun = (q) => (-6 + (s.vanZ0 ?? 0) + 2.88 + GAP) - vJog * Math.min(q, 1.6);   // Dex ground track while jogging (the van drives away at its own speed)
@@ -111,7 +159,7 @@ export function install(E) {
           setGigFace(gig, { eyes: 'eyes_wide', mouth: s.what === 'horn' && press > 0.3 ? 'mouth_open' : 'mouth_smile' });
         }
         const wp = V(0, 0, 0), hp = V(0, 0, 0); w.getWorldPosition(wp); gig.j.head.getWorldPosition(hp); focus = wp.clone().add(hp).multiplyScalar(0.5); break; }
-      case 'van': { H.pigeons?.update(s.pigeonT ?? -1); H.tulips?.update(s.tulipT ?? -1); focus = V(0, 1, vz); break; }
+      case 'van': { if (s.pigeonZ !== undefined && H.pigeons) H.pigeons.group.position.set(0, 0, s.pigeonZ); H.pigeons?.update(s.pigeonT ?? -1); H.tulips?.update(s.tulipT ?? -1); focus = V(0, 1, vz); break; }
     }
     if (s.pigeonT !== undefined) H.pigeons?.update(s.pigeonT); if (s.tulipT !== undefined) H.tulips?.update(s.tulipT);
     if (H.sun) { H.sun.target.position.set(focus.x, 0, focus.z); H.sun.position.set(focus.x + 10, 22, focus.z + 12); H.sun.target.updateMatrixWorld(); }
@@ -120,5 +168,5 @@ export function install(E) {
     camera.fov = c.fov ?? 40; camera.updateProjectionMatrix(); camera.updateMatrixWorld(); renderer.render(scene, camera);
   };
 }
-const lerpA = (a, b2, t) => a + (b2 - a) * t;
+const lerpA = (a, b2, t) => a + (b2 - a) * t, lerpN = lerpA;
 const clampT = (k) => Math.min(1, Math.max(0, k ?? 0)), lerp = (a, b, t) => a + (b - a) * t, sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };

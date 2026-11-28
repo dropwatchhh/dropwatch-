@@ -117,7 +117,7 @@ export function tulipBurst(THREE, n = 46, colors = [0xe8407a, 0xffd23f, 0xff7a3a
   const grp = new THREE.Group(); let a = seed; const R = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
   const mats = colors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 })), stemM = new THREE.MeshStandardMaterial({ color: 0x4f8f3a }), items = [];
   for (let i = 0; i < n; i++) { const t = new THREE.Group(); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.38, 6), stemM); st.position.y = 0.19; const hd = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), mats[i % mats.length]); hd.scale.y = 1.35; hd.position.y = 0.4; t.add(st, hd); grp.add(t);
-    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.6 + R() * 3.2), 3.4 + R() * 3.4, -(0.6 + R() * 3.0)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (1.25 + R() * 0.5), 0.55, (R() - 0.5) * 0.5] }); }
+    const ang = R() * 6.283, sp = 1.8 + R() * 3.2; items.push({ t, v: [(R() < 0.5 ? -1 : 1) * (1.6 + R() * 3.2), 3.4 + R() * 3.4, -(0.6 + R() * 3.0)], spin: [R() * 8 - 4, R() * 8 - 4, R() * 8 - 4], p0: [(R() < 0.5 ? -1 : 1) * (0.55 + R() * 0.7), 1.05, (R() - 0.5) * 0.4] }); }
   const update = (tau) => { for (const q of items) { const u = Math.max(0, tau); q.t.visible = u > 0; q.t.position.set(q.p0[0] + q.v[0] * u, Math.max(0.02, q.p0[1] + q.v[1] * u - 4.9 * u * u), q.p0[2] + q.v[2] * u); q.t.rotation.set(q.spin[0] * u, q.spin[1] * u, q.spin[2] * u); } };
   return { group: grp, update };
 }
@@ -166,4 +166,25 @@ export function gait(t, mode = 'walk', S = 0.41, o = {}) {
   const rootY = S * (Dh + ANK - HIPYg);
   const yaw = G.twist * 0.7 * (fwdA - fwdB) * 0.5, lat = G.sway * (A.st ? 1 : -1) * Math.sin(Math.PI * stanceLeg.k);
   return { pose: P, rootY, lat, yaw, v: G.v, stance: { L: A.st, R: B.st }, zA };
+}
+
+// ================= Dex arm IK (shoulder fwd/out + elbow) to put the palm centre on a world target; works for any rig with arms {sh,el,wr} =================
+export function ikArm(THREE, rig, key, target, offY = -0.2, init) {
+  const a = rig.j.arms[key], s = a.s;
+  const apply = (v) => { a.sh.rotation.set(-v[0] * D, 0, s * v[1] * D); a.el.rotation.set(-v[2] * D, 0, 0); rig.root.updateMatrixWorld(true); const q = new THREE.Vector3(0, offY, 0); a.wr.localToWorld(q); return q; };
+  const det = M => M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+  const solve = (x0) => { let x = x0.slice();
+    for (let it = 0; it < 24; it++) {
+      const p = apply(x), er = target.clone().sub(p); if (er.length() < 1.2e-3) break;
+      const J = [0, 1, 2].map(i => { const y = x.slice(); y[i] += 1; return apply(y).sub(p); });
+      const Am = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], bb = [0, 0, 0];
+      for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) Am[i][j] = J[i].dot(J[j]) + (i === j ? 2e-3 : 0); bb[i] = J[i].dot(er); }
+      const d0 = det(Am); if (Math.abs(d0) < 1e-12) break; const dx = [0, 1, 2].map(c => det(Am.map((row, r) => row.map((v, cc) => cc === c ? bb[r] : v))) / d0);
+      x = x.map((v, i) => v + Math.max(-12, Math.min(12, dx[i]))); x[0] = clamp(x[0], -40, 178); x[1] = clamp(x[1], -30, 110); x[2] = clamp(x[2], 2, 148);
+    }
+    return { x, err: target.distanceTo(apply(x)) }; };
+  const cur = init ?? [-a.sh.rotation.x / D, s * a.sh.rotation.z / D, -a.el.rotation.x / D];
+  const starts = [cur, [100, 20, 50], [150, 10, 20], [70, 30, 100], [120, 5, 70], [40, 15, 20]];
+  let best = null; for (const st of starts) { const r = solve(st); if (!best || r.err < best.err) best = r; if (best.err < 2e-3) break; }
+  apply(best.x); a._ikErr = best.err; return best.err;
 }
