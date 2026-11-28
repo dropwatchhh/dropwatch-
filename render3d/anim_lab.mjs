@@ -84,6 +84,11 @@ export function install(E) {
         H.dex.root.position.set(0, 0, rear + lerp(3.4, 1.9, sm(0.18, 0.68, t))); H.dex.root.rotation.y = Math.PI; setPose(H.dex, A.dive(t)); H.dex.root.rotation.y = Math.PI; setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: 'mouth_shout' }); focus = V(0, 0.7, rear + 1.2); break; }
       case 'drag': {
         H.dex.root.position.set(0, 0, rear + 1.85); setPose(H.dex, A.drag(g, { selfie: s.selfie })); setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_worried', mouth: 'mouth_shout' }); focus = V(0, 0.4, rear + 0.9); break; }
+      case 'split': {   // hands on the bumper (left) and fingers on a guitar neck that sticks out of the van's back window (right)
+        const vz0 = H.van.position.z, rr = vz0 + 2.8; H.dex.root.position.set(0.1, 0, rr + 1.5); const P = A.reach(1, s.g ?? 0); setPose(H.dex, P); H.dex.root.position.x = 0.1; H.dex.root.rotation.y = Math.PI; H.dex.root.rotation.y = Math.PI;
+        setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: s.mouth ?? 'mouth_closed_worried' }); scene.updateMatrixWorld(true);
+        const hp = V(0, -0.2, 0); H.dex.j.arms.R.wr.localToWorld(hp); const g = H.vguitar; if (g) { scene.attach(g); g.scale.setScalar(0.6); g.rotation.set(Math.PI / 2, 0, 0); g.position.set(hp.x, hp.y, hp.z + 0.12 - 1.25); }
+        focus = V(0.1, 0.8, rr + 0.9); break; }
       case 'hang': case 'reach': {
         H.dex.root.position.set(0.55, 0, rear + 1.5); setPose(H.dex, s.anim === 'reach' ? A.reach(t, g) : A.hang(g)); H.dex.root.position.x = 0.55; setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_up', mouth: s.mouth ?? 'mouth_closed_worried' }); focus = V(0.3, 0.9, rear + 0.8); break; }
       case 'nana': {

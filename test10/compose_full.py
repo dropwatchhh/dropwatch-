@@ -54,11 +54,12 @@ def vote(im,T):
     for x,txt,col in ((W//4,"CHASE",(255,255,255)),(3*W//4,"PLAY",(255,255,255))):
         f=F("ExtraBold",150 if txt=="PLAY" else 140); w=d.textlength(txt,font=f); d.text((x-w/2,820),txt,font=f,fill=col+(int(255*k),),stroke_width=14,stroke_fill=(26,13,51,int(255*k)))
     d.text((W//4-190,1000),"grab the bumper",font=F("Bold",38),fill=(255,255,255,int(230*k))); d.text((3*W//4-170,1000),"grab the guitar",font=F("Bold",38),fill=(255,255,255,int(230*k)))
-    lines=[(60.34,"CHASE or PLAY?"),(62.0,"COMMENT ONE WORD"),(63.45,"YOUR CALL, CREW!")]
-    for t0,txt in lines:
-        if T>=t0:
-            pop=min(1,(T-t0)/0.14); sc=0.75+0.25*(1-(1-pop)**2); size=int((120 if len(txt)<17 else 96)*sc); f=F("ExtraBold",size); w=d.textlength(txt,font=f)
-            y=1500+lines.index((t0,txt))*0+0; d.text(((W-w)/2,1480),txt,font=f,fill=(255,214,70,255) if txt.startswith('YOUR') else (255,255,255,255),stroke_width=14,stroke_fill=(26,13,51,255)) if T<(t0+1.6 if txt!='YOUR CALL, CREW!' else 99) else None
+    lines=[(60.34,"CHASE or PLAY?",1.6),(62.0,"COMMENT ONE WORD",1.45),(63.45,"YOUR CALL, CREW!",99)]
+    for t0,txt,dur in lines:
+        if t0<=T<t0+dur:
+            pop=min(1,(T-t0)/0.14); sc=0.75+0.25*(1-(1-pop)**2); size=130
+            while d.textlength(txt,font=F("ExtraBold",size))>940: size-=4
+            f=F("ExtraBold",int(size*sc)); w=d.textlength(txt,font=f); d.text(((W-w)/2,1480),txt,font=f,fill=(255,214,70,255) if txt.startswith('YOUR') else (255,255,255,255),stroke_width=14,stroke_fill=(26,13,51,255))
     return Image.alpha_composite(im.convert('RGBA'),ov)
 def hudlayer(im,T):
     W,H=im.size; ov=Image.new('RGBA',im.size,(0,0,0,0)); d=ImageDraw.Draw(ov); c=in_call(T)
@@ -75,7 +76,7 @@ def base_path(g):
         if os.path.exists(p): return p
     return None
 def split(T,g):
-    p=base_path(g); im=Image.open(p).convert('RGB'); W,H=im.size
+    p=f'/tmp/split_out/f{min(max(g,606),631):05d}.png'; im=Image.open(p).convert('RGB'); W,H=im.size
     left=im.crop(SPLIT['L']).resize((W//2,H)); right=im.crop(SPLIT['R']).resize((W//2,H)); S=Image.new('RGB',(W,H)); S.paste(left,(0,0)); S.paste(right,(W//2,0))
     d=ImageDraw.Draw(S); d.rectangle((W//2-4,0,W//2+4,H),fill=(255,255,255))
     for x,txt in ((W//4,"CHASE"),(3*W//4,"PLAY")):
