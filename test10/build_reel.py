@@ -46,7 +46,7 @@ gt=2.62; ld=gt+dur['s22']+0.3; d23=ld+dur['s23']+0.7; vis22=addvoice('s22',cur+g
 sfx('thud',cur+2.78,0.4,0.6); sfx('thud',cur+3.0,0.3,0.25)
 vzf=lambda tt:-(1.5*tt+0.2*tt*tt)
 def chase(t,u,i):
-    cam={"rel":True,"pos":[7.5-1.0*min(1,max(0,(t-1.4)/0.8)),1.1-0.1*min(1,max(0,(t-1.4)/0.8)),2.6-2.8*min(1,max(0,(t-1.4)/0.8))],"look":[0,0.4,-0.9],"fov":44}
+    cam={"rel":True,"pos":[7.5-1.0*min(1,max(0,(t-1.4)/0.8))+3.8*min(1,max(0,(t-2.4)/0.5)),1.1-0.1*min(1,max(0,(t-1.4)/0.8)),2.6-2.8*min(1,max(0,(t-1.4)/0.8))],"look":[0,0.4,-0.9],"fov":44}
     m='mouth_shout' if t<gt-0.4 else (mouthf(vis22,int((t-gt)*FPS)) if t<gt+dur['s22'] else 'mouth_closed_worried')
     return {"anim":"chase","tt":t,"vanZ":vzf(t),"vanZ0":0,"vanG":t,"mouth":m,"cam":cam}
 seg('R3 chase grab drag',d23,{"scene":LS,"spec":chase}); cur+=d23
@@ -87,7 +87,7 @@ for i in range(36):
     pose={"yaw":0,"spine":[2+3*e,0,0],"head":[0,0,0],"L":{"sh":[6,10],"el":14,"curl":[0.35,0.45,0.5,0.55,0.6]},"R":{"sh":[20+52*e,14],"el":96+16*e+3*np.sin(t*6),"curl":PH,"phone":True,"roll":-10-40*e},"legL":{"hip":[4,3],"knee":8},"legR":{"hip":[-3,3],"knee":4}}
     p1.append({"name":f"p1_{len(p1):04d}","scene":{"scene":"character","who":"dex"},"spec":{"anim":"hand","pose":pose,"cam":{"rel":True,"pos":[0.7+0.1*np.sin(t),0.2,0.9],"look":[0,0,0],"fov":24}}})
 for i in range(30):
-    t=i/FPS; p1.append({"name":f"p1_{len(p1):04d}","scene":LS,"spec":{"anim":"gait","mode":"walk","phone":True,"t":t,"cam":{"rel":True,"pos":[2.4,1.1,1.2],"look":[0,0.9,0],"fov":34}}})
+    t=i/FPS; p1.append({"name":f"p1_{len(p1):04d}","scene":LS,"spec":{"anim":"gait","mode":"walk","phone":True,"t":t,"cam":{"rel":True,"pos":[3.6,0.8,0.8],"look":[0,0.1,0],"fov":34}}})
 clipjson("p1_phone",p1)
 p2=[]
 for mode,T in (("walk",2.4),("jog",2.4)):

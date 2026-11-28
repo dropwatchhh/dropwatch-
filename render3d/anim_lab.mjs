@@ -17,7 +17,7 @@ export function install(E) {
     const vz = H.van ? H.van.position.z : 0, rear = rearOf(vz);
     const face = s.face ?? {};
     if (H.pigeons) H.pigeons.group.visible = s.anim === 'van'; if (H.tulips) H.tulips.group.visible = s.anim === 'van';
-    if (H.van && (s.anim === 'run' || s.anim === 'selfie' || s.anim === 'boot')) H.van.visible = false;
+    if (H.van && ['run', 'selfie', 'boot', 'boot2', 'gait'].includes(s.anim)) H.van.visible = false; else if (H.van) H.van.visible = true;
     switch (s.anim) {
       case 'hand': {   // close-up of a hand (phone grip tests): pose from spec, camera relative to the wrist
         setPose(H.dex, s.pose); setFace(H.dex, s.face ?? { mouth: 'mouth_smile' }); scene.updateMatrixWorld(true);
@@ -37,12 +37,12 @@ export function install(E) {
         const P = { yaw: 0, spine: [2 + 14 * k + 0.6 * br, 1.5 * Math.sin(t * 0.8), 1.2 * Math.sin(t * 0.7)], head: [2 + 6 * k, 3 * Math.sin(t * 0.9) * (1 - k), 4 * Math.sin(t * 0.6) + 5 * k],
           L: { sh: [38 + 8 * k, 10], el: 66 - 10 * k, curl: [0.4, 0.55, 0.55, 0.6, 0.6] }, R: { sh: [38 + 8 * k, 10], el: 66 - 10 * k, curl: [0.4, drum(0), drum(1), drum(2), drum(3)] },
           legL: { hip: [85, 4], knee: 85 }, legR: { hip: [85, 4], knee: 85 } };
-        setPose(L, P); const blink = (t % 3.1) < 0.12; setFace(L, { eyes: blink ? 'eyes_closed' : (k > 0.5 ? 'eyes_wide' : 'eyes_half'), brows: k > 0.5 ? 'brows_up' : 'brows_smirk', mouth: k > 0.5 ? 'mouth_closed_worried' : 'mouth_closed_smirk' });
-        scene.updateMatrixWorld(true); const hp = V(0, 0, 0); L.j.neck.getWorldPosition(hp); focus = hp; break; }
+        setPose(L, P); L.root.position.y = -0.14; const blink = (t % 3.1) < 0.12; setFace(L, { eyes: blink ? 'eyes_closed' : (k > 0.5 ? 'eyes_wide' : 'eyes_half'), brows: k > 0.5 ? 'brows_up' : 'brows_smirk', mouth: k > 0.5 ? 'mouth_closed_worried' : 'mouth_closed_smirk' });
+        scene.updateMatrixWorld(true); const hp = V(0, 0, 0); L.j.neck.getWorldPosition(hp); focus = hp; console.error('LENADBG ' + JSON.stringify({ neck: hp.toArray(), root: L.root.position.toArray(), vis: L.root.visible, scale: L.root.scale.x, nanCheck: L.j.chest.rotation.toArray() })); break; }
       case 'gait': {   // IK walk/jog: feet planted (no sliding), measured every frame
         const mode = s.mode ?? 'walk', S = H.dex.root.scale.x, gt = A.gait(t, mode, S); const P = gt.pose; P.yaw = 180 + (s.faceYaw ?? 0) + gt.yaw;
         if (s.phone) { P.R = { sh: [62, 16], el: 108, curl: [0.45, 1.1, 1.12, 1.14, 1.15], phone: true, roll: -35 }; P.head = [P.head[0] + 4, P.head[1], 0]; }
-        setPose(H.dex, P); const z0 = -gt.v * t; H.dex.root.position.set(-gt.lat * Math.cos(Math.PI), gt.rootY, z0 + 0); H.dex.root.updateMatrixWorld(true);
+        setPose(H.dex, P); const z0 = (s.z0 ?? 3.5) - gt.v * t; H.dex.root.position.set(-gt.lat * Math.cos(Math.PI), gt.rootY, z0); H.dex.root.updateMatrixWorld(true);
         setFace(H.dex, { eyes: 'eyes_open', brows: 'brows_up', mouth: s.mouth ?? 'mouth_smile' });
         const ft = { L: V(0, -0.225, 0.1), R: V(0, -0.225, 0.1) }; H.dex.j.legL.ank.localToWorld(ft.L); H.dex.j.legR.ank.localToWorld(ft.R);
         { const fm0 = footMin(H.dex); if (fm0 < 0) { H.dex.root.position.y -= fm0; H.dex.root.updateMatrixWorld(true); } }
@@ -75,7 +75,7 @@ export function install(E) {
         else { place(Q.pitch ?? 0); const fm = footMin(H.dex); if (fm < 0) H.dex.root.position.y -= fm; }
         if (tt < 1.6) H.dex.root.rotation.y = Math.PI + cur.g.yaw * Math.PI / 180;
         setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: s.mouth ?? 'mouth_shout' }); const hmx = handMid(H.dex); if (tt >= 2.75) console.error('GRABCHK ' + JSON.stringify({ tt, dz: +(hmx.z - bump).toFixed(3), dy: +(hmx.y - 0.5).toFixed(3), foot: +footMin(H.dex).toFixed(3) }));
-        focus = V(0, 0.6, H.dex.root.position.z - 0.8); break; }
+        focus = V(0, 0.6, tt >= 2.4 ? (bump + H.dex.root.position.z) / 2 : H.dex.root.position.z - 0.8); break; }
       case 'dive': {
         H.dex.root.position.set(0, 0, rear + lerp(3.4, 1.9, sm(0.18, 0.68, t))); H.dex.root.rotation.y = Math.PI; setPose(H.dex, A.dive(t)); H.dex.root.rotation.y = Math.PI; setFace(H.dex, { eyes: 'eyes_wide', brows: 'brows_angry', mouth: 'mouth_shout' }); focus = V(0, 0.7, rear + 1.2); break; }
       case 'drag': {
